@@ -1,0 +1,12 @@
+#ifndef LIBPALAY_GLOBAL_H
+#define LIBPALAY_GLOBAL_H
+
+#include <QtCore/qglobal.h>
+
+#if defined(LIBPALAY_LIBRARY)
+#  define LIBPALAYSHARED_EXPORT Q_DECL_EXPORT
+#else
+#  define LIBPALAYSHARED_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // LIBPALAY_GLOBAL_H
