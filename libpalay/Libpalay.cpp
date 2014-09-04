@@ -12,7 +12,7 @@ extern "C"
 
 static int argc = 0;
 static char *argv[] = {};
-static QSharedPointer<QApplication> app;
+static QSharedPointer<QCoreApplication> app;
 
 static const char* docMetatableName = "palay.document";
 
@@ -60,7 +60,7 @@ static const struct luaL_Reg palaydoc_methods[] = {
 
 extern "C" {
     /* This function is called when the module is loaded from Lua
-     * via require() e.g. require("palay").
+     * via require() e.g. require("libpalay").
      */
     int LIBPALAYSHARED_EXPORT luaopen_libpalay(lua_State *L) {
 
@@ -68,7 +68,11 @@ extern "C" {
         // If running as a library in a non-Qt application
         // need to create one but don't create two.
         if (!QCoreApplication::instance()) {
-            app = QSharedPointer<QApplication>(new QApplication(argc, argv));
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
+            app = QSharedPointer<QCoreApplication>(new QGuiApplication(argc, argv));
+#else
+            app = QSharedPointer<QCoreApplication>(new QApplication(argc, argv, false));
+#endif
         }
         luaL_newmetatable(L, docMetatableName);
         lua_pushstring(L, "__index");

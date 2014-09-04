@@ -1,8 +1,16 @@
 
+extern "C"
+{
+    #include <lua.h>
+    #include <lauxlib.h>
+    #include <lualib.h>
+}
+
 #include <QApplication>
 #include <stdio.h>
 #include <getopt.h>
 #include <QPrinter>
+#include <QFile>
 
 static void usage(const char *argv0)
 {
@@ -12,9 +20,35 @@ static void usage(const char *argv0)
     fprintf(stderr, "  -f Output format (pdf|ps|odf|html|txt)\n");
 }
 
+int runScript(const QString &scriptFilename, const QString &outputFilename, const QString &outputFormat, QPrinter::PageSize pageSize)
+{
+    QFile scriptFile(scriptFilename);
+    if (!scriptFile.open(QFile::ReadOnly)) {
+        fprintf(stderr, "Error opening file %s: %s", qPrintable(scriptFilename), qPrintable(scriptFile.errorString()));
+        return -1;
+    }
+
+    QByteArray script = scriptFile.readAll();
+    lua_State *L = luaL_newstate();
+    luaL_openlibs(L);
+
+    bool error = luaL_loadbuffer(L, script, script.count(), scriptFilename.toUtf8().constData()) ||
+            lua_pcall(L, 0, LUA_MULTRET, 0);
+
+    if (error) {
+        fprintf(stderr, "Error executing %s.\n%s", lua_tostring(L, -1));
+    }
+    lua_close(L);
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
+    QGuiApplication a(argc, argv);
+#else
+    QApplication a(argc, argv, false);
+#endif
 
     if (argc < 2) {
         usage(argv[0]);
@@ -68,7 +102,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    QString script = argv[optind];
+    QString scriptFilename = argv[optind];
 
-    return 0;
+    return runScript(scriptFilename, outputFilename, outputFormat, pageSize);
 }

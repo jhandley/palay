@@ -5,6 +5,7 @@
 #-------------------------------------------------
 
 QT       += core gui
+greaterThan(QT_MAJOR_VERSION, 4): QT += printsupport
 
 TARGET = palay
 CONFIG   += console
@@ -32,3 +33,9 @@ unix {
     target.path = /usr/bin
     INSTALLS += target
 }
+
+RESOURCES += \
+    palay.qrc
+
+OTHER_FILES += \
+    resources/scripts/init.lua
