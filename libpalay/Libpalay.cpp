@@ -7,11 +7,12 @@ extern "C"
     #include <lualib.h>
 }
 #include "PalayDocument.h"
-#include <QGuiApplication>
+#include <QApplication>
+#include <QSharedPointer>
 
 static int argc = 0;
 static char *argv[] = {};
-static QGuiApplication app(argc, argv);
+static QSharedPointer<QApplication> app;
 
 static const char* docMetatableName = "palay.document";
 
@@ -63,6 +64,12 @@ extern "C" {
      */
     int LIBPALAYSHARED_EXPORT luaopen_libpalay(lua_State *L) {
 
+        // QTextDocument requires a QApplication.
+        // If running as a library in a non-Qt application
+        // need to create one but don't create two.
+        if (!QCoreApplication::instance()) {
+            app = QSharedPointer<QApplication>(new QApplication(argc, argv));
+        }
         luaL_newmetatable(L, docMetatableName);
         lua_pushstring(L, "__index");
         lua_pushvalue(L, -2);  // pushes the metatable

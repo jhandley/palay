@@ -1,30 +1,18 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2014-09-02T18:57:23
+# Project created by QtCreator 2014-09-04T09:25:28
 #
 #-------------------------------------------------
 
 QT       += core gui
-greaterThan(QT_MAJOR_VERSION, 4): QT += printsupport
 
-win32 {
-    TARGET = libpalay
-}
-unix {
-    TARGET = palay
-}
+TARGET = palay
+CONFIG   += console
+CONFIG   -= app_bundle
 
-TEMPLATE = lib
+TEMPLATE = app
 
-DEFINES += LIBPALAY_LIBRARY
-
-SOURCES += Libpalay.cpp \
-           PalayDocument.cpp
-
-
-HEADERS +=\
-        libpalay_global.h \
-        PalayDocument.h
+SOURCES += main.cpp
 
 unix:cross_compile {
     LIBS += -llua -ldl
@@ -40,8 +28,7 @@ win32 {
     LIBS += -llua52
 }
 
-
 unix {
-    target.path = /usr/lib
+    target.path = /usr/bin
     INSTALLS += target
 }
