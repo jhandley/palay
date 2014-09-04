@@ -7,11 +7,11 @@ extern "C"
     #include <lualib.h>
 }
 #include "PalayDocument.h"
-#include <QCoreApplication>
+#include <QGuiApplication>
 
 static int argc = 0;
 static char *argv[] = {};
-static QCoreApplication app(argc, argv);
+static QGuiApplication app(argc, argv);
 
 static const char* docMetatableName = "palay.document";
 
@@ -61,7 +61,7 @@ extern "C" {
     /* This function is called when the module is loaded from Lua
      * via require() e.g. require("palay").
      */
-    int LIBPALAYSHARED_EXPORT luaopen_palay(lua_State *L) {
+    int LIBPALAYSHARED_EXPORT luaopen_libpalay(lua_State *L) {
 
         luaL_newmetatable(L, docMetatableName);
         lua_pushstring(L, "__index");

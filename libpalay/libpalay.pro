@@ -4,22 +4,28 @@
 #
 #-------------------------------------------------
 
-QT       += core
-QT       -= gui
+QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += printsupport
 
-TARGET = palay
+win32 {
+    TARGET = libpalay
+}
+unix {
+    TARGET = palay
+}
+
 TEMPLATE = lib
 
 DEFINES += LIBPALAY_LIBRARY
 
 SOURCES += Libpalay.cpp \
-    PalayDocument.cpp
+           PalayDocument.cpp
 
-HEADERS += Libpalay.h\
+
+HEADERS +=\
         libpalay_global.h \
-    PalayDocument.h
+        PalayDocument.h
 
 unix:cross_compile {
     LIBS += -llua -ldl
