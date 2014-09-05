@@ -18,9 +18,8 @@ static const char* docMetatableName = "palay.document";
 
 static int newDocument(lua_State *L)
 {
-    printf("Creating document");
-    void *ud = lua_newuserdata(L, sizeof(PalayDocument));
-    new(ud) PalayDocument();
+    PalayDocument **ud = (PalayDocument**) lua_newuserdata(L, sizeof(PalayDocument*));
+    *ud = new PalayDocument();
 
     luaL_getmetatable(L, docMetatableName);
     lua_setmetatable(L, -2);
@@ -29,8 +28,7 @@ static int newDocument(lua_State *L)
 
 static int paragraph(lua_State *L)
 {
-    printf("Add paragraph");
-    PalayDocument *doc = (PalayDocument *) luaL_checkudata(L, 1, docMetatableName);;
+    PalayDocument *doc = *((PalayDocument **) luaL_checkudata(L, 1, docMetatableName));
     luaL_argcheck(L, doc != NULL, 1, "`PalayDocument' expected");
     const char *text = luaL_checkstring(L, 2);
     doc->paragraph(QString::fromUtf8(text));
@@ -39,11 +37,17 @@ static int paragraph(lua_State *L)
 
 static int saveAs(lua_State *L)
 {
-    printf("saveAs");
-    PalayDocument *doc = (PalayDocument *) luaL_checkudata(L, 1, docMetatableName);
+    PalayDocument *doc = *((PalayDocument **) luaL_checkudata(L, 1, docMetatableName));
     luaL_argcheck(L, doc != NULL, 1, "`PalayDocument' expected");
     const char *path = luaL_checkstring(L, 2);
     doc->toPDF(QString::fromUtf8(path));
+    return 0;
+}
+
+static int gc(lua_State *L)
+{
+    PalayDocument *doc = *((PalayDocument **) luaL_checkudata(L, 1, docMetatableName));
+    delete doc;
     return 0;
 }
 
@@ -55,6 +59,7 @@ static const struct luaL_Reg palaylib_functions[] = {
 static const struct luaL_Reg palaydoc_methods[] = {
     {"paragraph", paragraph},
     {"saveAs", saveAs},
+    {"__gc", gc},
     {NULL, NULL}
 };
 
