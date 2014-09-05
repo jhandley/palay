@@ -20,7 +20,7 @@ static void usage(const char *argv0)
     fprintf(stderr, "  -f Output format (pdf|ps|odf|html|txt)\n");
 }
 
-int runScript(const QString &scriptFilename, const QString &outputFilename, const QString &outputFormat, QPrinter::PageSize pageSize)
+static bool runLuaScript(lua_State *L, const QString &scriptFilename)
 {
     QFile scriptFile(scriptFilename);
     if (!scriptFile.open(QFile::ReadOnly)) {
@@ -29,16 +29,50 @@ int runScript(const QString &scriptFilename, const QString &outputFilename, cons
     }
 
     QByteArray script = scriptFile.readAll();
+    if (luaL_loadbuffer(L, script, script.count(), scriptFilename.toUtf8().constData())) {
+        fprintf(stderr, "Error executing %s.\n%s", qPrintable(scriptFilename), lua_tostring(L, -1));
+        return false;
+    }
+
+    if (lua_pcall(L, 0, LUA_MULTRET, 0)) {
+        fprintf(stderr, "Error executing %s.\n%s", qPrintable(scriptFilename), lua_tostring(L, -1));
+        return false;
+    }
+
+    return true;
+}
+
+static int savePalayDocument(lua_State *L)
+{
+    luaL_checktype(L, 1, LUA_TSTRING);
+    lua_getglobal(L, "saveAs");
+    lua_pushvalue(L, 1);
+    lua_call(L, 1, 0);
+
+    return 0;
+}
+
+static int runPalayScript(const QString &scriptFilename, const QString &outputFilename, const QString &outputFormat, QPrinter::PageSize pageSize)
+{
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
 
-    bool error = luaL_loadbuffer(L, script, script.count(), scriptFilename.toUtf8().constData()) ||
-            lua_pcall(L, 0, LUA_MULTRET, 0);
-
-    if (error) {
-        fprintf(stderr, "Error executing %s.\n%s", lua_tostring(L, -1));
+    if (!runLuaScript(L, ":/resources/scripts/init.lua")) {
+        lua_close(L);
+        return -1;
     }
+
+    if (!runLuaScript(L, scriptFilename)) {
+        lua_close(L);
+        return -1;
+    }
+
+    lua_pushcfunction(L, savePalayDocument);
+    lua_pushstring(L, outputFilename.toUtf8());
+    lua_pcall(L, 1, 0, 0);
+
     lua_close(L);
+
     return 0;
 }
 
@@ -104,5 +138,8 @@ int main(int argc, char *argv[])
 
     QString scriptFilename = argv[optind];
 
-    return runScript(scriptFilename, outputFilename, outputFormat, pageSize);
+
+    return runPalayScript(scriptFilename, outputFilename, outputFormat, pageSize);
+
+    return 0;
 }
