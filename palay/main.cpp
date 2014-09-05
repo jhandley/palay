@@ -20,6 +20,19 @@ static void usage(const char *argv0)
     fprintf(stderr, "  -f Output format (pdf|ps|odf|html|txt)\n");
 }
 
+/*!
+ * Pushes lua stack trace for thread L onto lua stack as a string.
+ * If there is already an error string on stack, it is
+ * included in the stack trace string and the new string
+ * replaces the error string.
+ */
+static int pushLuaStackTrace(lua_State *L)
+{
+    const char* msg = lua_tostring(L, -1);
+    luaL_traceback(L, L, msg, 1);
+    return 1;
+}
+
 static bool runLuaScript(lua_State *L, const QString &scriptFilename)
 {
     QFile scriptFile(scriptFilename);
@@ -29,15 +42,21 @@ static bool runLuaScript(lua_State *L, const QString &scriptFilename)
     }
 
     QByteArray script = scriptFile.readAll();
+
+    lua_pushcfunction(L, pushLuaStackTrace);
+    int errhandlerIndex = lua_gettop(L);
+
     if (luaL_loadbuffer(L, script, script.count(), scriptFilename.toUtf8().constData())) {
         fprintf(stderr, "Error executing %s.\n%s", qPrintable(scriptFilename), lua_tostring(L, -1));
         return false;
     }
 
-    if (lua_pcall(L, 0, LUA_MULTRET, 0)) {
+    if (lua_pcall(L, 0, LUA_MULTRET, errhandlerIndex)) {
         fprintf(stderr, "Error executing %s.\n%s", qPrintable(scriptFilename), lua_tostring(L, -1));
         return false;
     }
+
+    lua_remove(L, errhandlerIndex); // clear error handler from stack
 
     return true;
 }

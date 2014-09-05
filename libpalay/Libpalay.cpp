@@ -1,4 +1,4 @@
-#include "Libpalay.h"
+#include "libpalay_global.h"
 
 extern "C"
 {
@@ -26,27 +26,40 @@ static int newDocument(lua_State *L)
     return 1;
 }
 
+static PalayDocument* checkDocument(lua_State *L, int index)
+{
+    PalayDocument **docPtr = (PalayDocument **) luaL_checkudata(L, index, docMetatableName);
+    luaL_argcheck(L, docPtr != NULL, 1, "`PalayDocument' expected");
+    return *docPtr;
+}
+
 static int paragraph(lua_State *L)
 {
-    PalayDocument *doc = *((PalayDocument **) luaL_checkudata(L, 1, docMetatableName));
-    luaL_argcheck(L, doc != NULL, 1, "`PalayDocument' expected");
-    const char *text = luaL_checkstring(L, 2);
-    doc->paragraph(QString::fromUtf8(text));
-    return 0;
+    PalayDocument *doc = checkDocument(L, 1);
+    return doc->paragraph(L);
+}
+
+static int text(lua_State *L)
+{
+    PalayDocument *doc = checkDocument(L, 1);
+    return doc->text(L);
+}
+
+static int style(lua_State *L)
+{
+    PalayDocument *doc = checkDocument(L, 1);
+    return doc->style(L);
 }
 
 static int saveAs(lua_State *L)
 {
-    PalayDocument *doc = *((PalayDocument **) luaL_checkudata(L, 1, docMetatableName));
-    luaL_argcheck(L, doc != NULL, 1, "`PalayDocument' expected");
-    const char *path = luaL_checkstring(L, 2);
-    doc->toPDF(QString::fromUtf8(path));
-    return 0;
+    PalayDocument *doc = checkDocument(L, 1);
+    return doc->saveAs(L);
 }
 
 static int gc(lua_State *L)
 {
-    PalayDocument *doc = *((PalayDocument **) luaL_checkudata(L, 1, docMetatableName));
+    PalayDocument *doc = checkDocument(L, 1);
     delete doc;
     return 0;
 }
@@ -58,6 +71,8 @@ static const struct luaL_Reg palaylib_functions[] = {
 
 static const struct luaL_Reg palaydoc_methods[] = {
     {"paragraph", paragraph},
+    {"text", text},
+    {"style", style},
     {"saveAs", saveAs},
     {"__gc", gc},
     {NULL, NULL}

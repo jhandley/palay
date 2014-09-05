@@ -3,7 +3,8 @@
 
 #include <QObject>
 #include <QTextDocument>
- #include <QTextCharFormat>
+
+struct lua_State;
 
 class PalayDocument : public QObject
 {
@@ -12,8 +13,10 @@ public:
     explicit PalayDocument(QObject *parent = 0);
     ~PalayDocument();
 
-    void paragraph(const QString &text);
-    void toPDF(const QString &path);
+    int paragraph(lua_State *L);
+    int text(lua_State *L);
+    int style(lua_State *L);
+    int saveAs(lua_State *L);
 
 signals:
 
