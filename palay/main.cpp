@@ -88,7 +88,10 @@ static int runPalayScript(const QString &scriptFilename, const QString &outputFi
 
     lua_pushcfunction(L, savePalayDocument);
     lua_pushstring(L, outputFilename.toUtf8());
-    lua_pcall(L, 1, 0, 0);
+    if (lua_pcall(L, 1, 0, 0)) {
+        fprintf(stderr, "Error writing file %s.\n%s", qPrintable(outputFilename), lua_tostring(L, -1));
+        return -1;
+    }
 
     lua_close(L);
 
