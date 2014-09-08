@@ -5,6 +5,7 @@
 #include <QTextDocument>
 
 struct lua_State;
+class QTextCharFormat;
 
 class PalayDocument : public QObject
 {
@@ -18,11 +19,21 @@ public:
     int style(lua_State *L);
     int saveAs(lua_State *L);
 
+    enum FontStyle {
+        Normal = 0,
+        Bold = 1,
+        Italic = 2,
+        Underline = 4
+    };
+
 signals:
 
 public slots:
 
 private:
+
+    bool setFontStyle(QTextCharFormat &format, int style);
+
     QTextDocument *doc_;
     QTextCursor *cursor_;
 };

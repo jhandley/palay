@@ -82,6 +82,9 @@ int PalayDocument::style(lua_State *L)
             if (!lua_isnumber(L, -1) || lua_tointeger(L, -1) <= 0)
                 luaL_error(L, "Invalid value for font_size. Must be a positive number.");
             charFormat.setFontPointSize(lua_tointeger(L, -1));
+        } else if (strcmp(key, "font_style") == 0) {
+            if (!lua_isnumber(L, -1) || !setFontStyle(charFormat, lua_tointeger(L, -1)))
+                luaL_error(L, "Invalid value for font_style.");
         } else {
             luaL_error(L, "Invalid key in style table: %s", key);
         }
@@ -103,4 +106,14 @@ int PalayDocument::saveAs(lua_State *L)
 
     doc_->print(&pdfPrinter);
     return 0;
+}
+
+bool PalayDocument::setFontStyle(QTextCharFormat &format, int style)
+{
+    if (style < 0 || style > (Bold + Italic + Underline))
+        return false;
+    format.setFontWeight(style & Bold ? QFont::Bold : QFont::Normal);
+    format.setFontItalic(style & Italic);
+    format.setFontUnderline(style & Underline);
+    return true;
 }
