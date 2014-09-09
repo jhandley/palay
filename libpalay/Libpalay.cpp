@@ -100,6 +100,16 @@ extern "C" {
         lua_settable(L, -3);  // metatable.__index = metatable
         luaL_setfuncs(L, palaydoc_methods, 0);
         luaL_newlib(L, palaylib_functions);
+
+        lua_pushinteger(L, (int) PalayDocument::Normal);
+        lua_setfield(L, -2, "Normal");
+        lua_pushinteger(L, (int) PalayDocument::Bold);
+        lua_setfield(L, -2, "Bold");
+        lua_pushinteger(L, (int) PalayDocument::Italic);
+        lua_setfield(L, -2, "Italic");
+        lua_pushinteger(L, (int) PalayDocument::Underline);
+        lua_setfield(L, -2, "Underline");
+
         return 1;
     }
 }

@@ -9,3 +9,8 @@ style = function(...) return palaydocument:style(...) end
 text = function(...) return palaydocument:text(...) end
 paragraph = function(...) return palaydocument:paragraph(...) end
 saveAs = function(...) return palaydocument:saveAs(...) end
+
+Normal = palay.Normal
+Bold = palay.Bold
+Italic = palay.Italic
+Underline = palay.Underline
