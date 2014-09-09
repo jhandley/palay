@@ -1,0 +1,36 @@
+
+style({font_family = "Helvetica", font_size=14, font_style=Underline})
+paragraph("Font Families")
+
+style({font_family = "Helvetica", font_size=12, font_style=Normal})
+paragraph("Helvetica")
+style({font_family = "Times"})
+paragraph("Times")
+style({font_family = "Courier"})
+paragraph("Courier")
+
+style({font_family = "Helvetica", font_size=14, font_style=Underline})
+paragraph("Font Sizes")
+
+style({font_family = "Helvetica", font_size=6, font_style=Normal})
+paragraph("6 point")
+style({font_size=12})
+paragraph("12 point")
+style({font_size=24})
+paragraph("24 point")
+style({font_size=48})
+paragraph("48 point")
+
+style({font_family = "Helvetica", font_size=14, font_style=Underline})
+paragraph("Font Styles")
+
+style({font_family = "Helvetica", font_size=12, font_style=Normal})
+style({font_style=Bold})
+paragraph("Bold")
+style({font_style=Italic})
+paragraph("Italic")
+style({font_style=Underline})
+paragraph("Underline")
+style({font_style=Bold + Italic + Underline})
+paragraph("Bold + italic + underline")
+
