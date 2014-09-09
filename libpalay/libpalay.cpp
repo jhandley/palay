@@ -51,6 +51,24 @@ static int style(lua_State *L)
     return doc->style(L);
 }
 
+static int table(lua_State *L)
+{
+    PalayDocument *doc = checkDocument(L, 1);
+    return doc->table(L);
+}
+
+static int cell(lua_State *L)
+{
+    PalayDocument *doc = checkDocument(L, 1);
+    return doc->cell(L);
+}
+
+static int endTable(lua_State *L)
+{
+    PalayDocument *doc = checkDocument(L, 1);
+    return doc->endTable(L);
+}
+
 static int saveAs(lua_State *L)
 {
     PalayDocument *doc = checkDocument(L, 1);
@@ -73,6 +91,9 @@ static const struct luaL_Reg palaydoc_methods[] = {
     {"paragraph", paragraph},
     {"text", text},
     {"style", style},
+    {"table", table},
+    {"cell", cell},
+    {"endTable", endTable},
     {"saveAs", saveAs},
     {"__gc", gc},
     {NULL, NULL}
@@ -109,6 +130,15 @@ extern "C" {
         lua_setfield(L, -2, "Italic");
         lua_pushinteger(L, (int) PalayDocument::Underline);
         lua_setfield(L, -2, "Underline");
+
+        lua_pushinteger(L, (int) PalayDocument::None);
+        lua_setfield(L, -2, "None");
+        lua_pushinteger(L, (int) PalayDocument::Dashed);
+        lua_setfield(L, -2, "Dashed");
+        lua_pushinteger(L, (int) PalayDocument::Dotted);
+        lua_setfield(L, -2, "Dotted");
+        lua_pushinteger(L, (int) PalayDocument::Solid);
+        lua_setfield(L, -2, "Solid");
 
         return 1;
     }

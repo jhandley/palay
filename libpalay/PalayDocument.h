@@ -3,6 +3,8 @@
 
 #include <QObject>
 #include <QTextDocument>
+#include <QTextTableFormat>
+#include <QStack>
 
 struct lua_State;
 class QTextCharFormat;
@@ -19,11 +21,22 @@ public:
     int style(lua_State *L);
     int saveAs(lua_State *L);
 
+    int table(lua_State *L);
+    int cell(lua_State *L);
+    int endTable(lua_State *L);
+
     enum FontStyle {
         Normal = 0,
         Bold = 1,
         Italic = 2,
         Underline = 4
+    };
+
+    enum BorderStyle {
+        None = 0,
+        Dotted = 1,
+        Dashed = 2,
+        Solid = 3
     };
 
 signals:
@@ -33,9 +46,11 @@ public slots:
 private:
 
     bool setFontStyle(QTextCharFormat &format, int style);
+    bool setBorderStyle(QTextTableFormat &format, int style);
 
     QTextDocument *doc_;
-    QTextCursor *cursor_;
+    QStack<QTextCursor> cursorStack_;
+    QTextTableFormat tableFormat_;
 };
 
 #endif // PALAYDOCUMENT_H
