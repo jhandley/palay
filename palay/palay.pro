@@ -15,6 +15,11 @@ TEMPLATE = app
 
 SOURCES += main.cpp
 
+INCLUDEPATH += ../libpalay
+
+LIBS += -L../libpalay
+LIBS += -lpalay
+
 unix:cross_compile {
     LIBS += -llua -ldl
 }
@@ -37,5 +42,3 @@ unix {
 RESOURCES += \
     palay.qrc
 
-OTHER_FILES += \
-    resources/scripts/init.lua

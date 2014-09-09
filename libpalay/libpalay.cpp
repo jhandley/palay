@@ -1,4 +1,4 @@
-#include "libpalay_global.h"
+#include "libpalay.h"
 
 extern "C"
 {

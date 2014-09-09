@@ -11,6 +11,7 @@ extern "C"
 #include <getopt.h>
 #include <QPrinter>
 #include <QFile>
+#include "libpalay.h"
 
 static void usage(const char *argv0)
 {
@@ -71,15 +72,69 @@ static int savePalayDocument(lua_State *L)
     return 0;
 }
 
+/*!
+ * Forwards call to global methods to a method on the palay document
+ * object. Meant to be used as a closure with the method and the document
+ * object as upvalues.
+ */
+static int callWithDoc(lua_State *L)
+{
+    // lua_call wants us to first push the method, then
+    // the arguments in order, we currently have the args in
+    // order on top of the stack so we need to first push
+    // the method, then the document object (self parameter as
+    // first arg) and finally the arguments.
+
+    int nargs = lua_gettop(L);
+    lua_pushvalue(L, lua_upvalueindex(1)); // method to call
+    lua_pushvalue(L, lua_upvalueindex(2)); // document object
+    for (int i = 0; i < nargs; ++i) {
+        lua_pushvalue(L, i + 1);
+    }
+
+    lua_call(L, nargs + 1, LUA_MULTRET);
+    int nret = lua_gettop(L) - nargs;
+    return nret;
+}
+
 static int runPalayScript(const QString &scriptFilename, const QString &outputFilename, const QString &outputFormat, QPrinter::PageSize pageSize)
 {
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
 
-    if (!runLuaScript(L, ":/resources/scripts/init.lua")) {
-        lua_close(L);
-        return -1;
+    // require "libpalay"
+    luaL_requiref(L, "libpalay", luaopen_libpalay, 0);
+
+    // Set constants defined in libpalay in global environment
+    // Anything the libpalay table that isn't function we treat
+    // as a constant.
+    lua_pushnil(L);
+    while (lua_next(L, 1) != 0) {
+        if (!lua_isfunction(L, -1)) {
+            lua_setglobal(L, lua_tostring(L, -2));
+        } else {
+            lua_pop(L, 1);
+        }
     }
+
+    // Call libpalay.newDocument
+    lua_getfield(L, 1, "newDocument");
+    lua_call(L, 0, 1);
+
+    // Expose all the methods in the document
+    // as global functions (closures with the document as an upvalue).
+    lua_getmetatable(L, -1);
+    lua_pushnil(L);
+    while (lua_next(L, -2) != 0) {
+        if (lua_isfunction(L, -1)) {
+            lua_pushvalue(L, 2); // palaydocument
+            lua_pushcclosure(L, callWithDoc, 2);
+            lua_setglobal(L, lua_tostring(L, -2)); // _G[key] = closure
+        } else {
+            lua_pop(L, 1);
+        }
+    }
+    lua_pop(L, 3);
 
     if (!runLuaScript(L, scriptFilename)) {
         lua_close(L);
@@ -159,9 +214,6 @@ int main(int argc, char *argv[])
     }
 
     QString scriptFilename = argv[optind];
-
-
     return runPalayScript(scriptFilename, outputFilename, outputFormat, pageSize);
 
-    return 0;
 }
