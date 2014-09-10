@@ -22,7 +22,7 @@ PalayDocument::PalayDocument(QObject *parent) :
     cursorStack_.push(QTextCursor(doc_));
 
     // Qt's default spacing of 2 causes screwy looking borders since there
-    // is space between the borders of adjactent cells.
+    // is space between the borders of adjacent cells.
     tableFormat_.setCellSpacing(0);
     // Qt's default format of 2 is kinda cramped.
     tableFormat_.setCellPadding(4);
@@ -111,11 +111,16 @@ int PalayDocument::style(lua_State *L)
             if (!color.isValid())
                 luaL_error(L, "Invalid color for text_color.");
             charFormat_.setForeground(QBrush(color));
-        } else if (strcmp(key, "background_color") == 0) {
+        } else if (strcmp(key, "text_background_color") == 0) {
             QColor color = getColor(L, -1);
             if (!color.isValid())
                 luaL_error(L, "Invalid color for background_color.");
             charFormat_.setBackground(QBrush(color));
+        } else if (strcmp(key, "background_color") == 0) {
+            QColor color = getColor(L, -1);
+            if (!color.isValid())
+                luaL_error(L, "Invalid color for background_color.");
+            blockFormat_.setBackground(QBrush(color));
         } else if (strcmp(key, "alignment") == 0) {
             Qt::Alignment align = getAlignment(L, -1);
             blockFormat_.setAlignment(align);

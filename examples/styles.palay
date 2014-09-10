@@ -51,4 +51,7 @@ style({text_color = {255, 0, 0}})
 paragraph("Red")
 style({text_color = 0x00FF00, background_color = "grey"})
 paragraph("Green on grey")
+style({text_color = 0x0000FF, text_background_color = "red"})
+text("blue on red")
+
 
