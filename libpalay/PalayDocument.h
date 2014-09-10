@@ -39,6 +39,17 @@ public:
         Solid = 3
     };
 
+    enum Alignment {
+        Left = 1,
+        Right = 2,
+        HCenter = 4,
+        Justify = 8,
+        Top = 16,
+        Bottom = 32,
+        VCenter = 64,
+        Center = 128
+    };
+
 signals:
 
 public slots:
@@ -48,10 +59,13 @@ private:
     bool setFontStyle(QTextCharFormat &format, int style);
     bool setBorderStyle(QTextTableFormat &format, int style);
     QColor getColor(lua_State *L, int index);
+    Qt::Alignment getAlignment(lua_State *L, int index);
 
     QTextDocument *doc_;
     QStack<QTextCursor> cursorStack_;
     QTextTableFormat tableFormat_;
+    QTextBlockFormat blockFormat_;
+    QTextCharFormat charFormat_;
 };
 
 #endif // PALAYDOCUMENT_H

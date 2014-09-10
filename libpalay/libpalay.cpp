@@ -140,6 +140,21 @@ extern "C" {
         lua_pushinteger(L, (int) PalayDocument::Solid);
         lua_setfield(L, -2, "Solid");
 
+        lua_pushinteger(L, (int) PalayDocument::Left);
+        lua_setfield(L, -2, "Left");
+        lua_pushinteger(L, (int) PalayDocument::Right);
+        lua_setfield(L, -2, "Right");
+        lua_pushinteger(L, (int) PalayDocument::HCenter);
+        lua_setfield(L, -2, "HCenter");
+        lua_pushinteger(L, (int) PalayDocument::Top);
+        lua_setfield(L, -2, "Top");
+        lua_pushinteger(L, (int) PalayDocument::Bottom);
+        lua_setfield(L, -2, "Bottom");
+        lua_pushinteger(L, (int) PalayDocument::VCenter);
+        lua_setfield(L, -2, "VCenter");
+        lua_pushinteger(L, (int) PalayDocument::Center);
+        lua_setfield(L, -2, "Center");
+
         return 1;
     }
 }

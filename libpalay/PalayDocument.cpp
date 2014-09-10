@@ -35,19 +35,17 @@ PalayDocument::~PalayDocument()
 
 int PalayDocument::paragraph(lua_State *L)
 {
-    cursorStack_.top().insertBlock();
+    cursorStack_.top().insertBlock(blockFormat_);
     text(L);
-    cursorStack_.top().insertBlock();
     return 0;
 }
 
 int PalayDocument::text(lua_State *L)
 {
     const char *text = luaL_checkstring(L, 2);
-    cursorStack_.top().insertText(QString::fromUtf8(text));
+    cursorStack_.top().insertText(QString::fromUtf8(text), charFormat_);
     return 0;
 }
-
 
 static void debugStackDump(lua_State *L)
 {
@@ -76,8 +74,6 @@ static void debugStackDump(lua_State *L)
 
 int PalayDocument::style(lua_State *L)
 {
-    QTextCharFormat charFormat;
-
     luaL_checktype(L, 2, LUA_TTABLE);
     lua_pushnil(L);
     while (lua_next(L, 2) != 0) {
@@ -87,13 +83,13 @@ int PalayDocument::style(lua_State *L)
         if (strcmp(key, "font_family") == 0) {
             if (!lua_isstring(L, -1))
                 luaL_error(L, "Invalid value for font_family. Must be a string.");
-            charFormat.setFontFamily(lua_tostring(L, -1));
+            charFormat_.setFontFamily(lua_tostring(L, -1));
         } else if (strcmp(key, "font_size") == 0) {
             if (!lua_isnumber(L, -1) || lua_tointeger(L, -1) <= 0)
                 luaL_error(L, "Invalid value for font_size. Must be a positive number.");
-            charFormat.setFontPointSize(lua_tointeger(L, -1));
+            charFormat_.setFontPointSize(lua_tointeger(L, -1));
         } else if (strcmp(key, "font_style") == 0) {
-            if (!lua_isnumber(L, -1) || !setFontStyle(charFormat, lua_tointeger(L, -1)))
+            if (!lua_isnumber(L, -1) || !setFontStyle(charFormat_, lua_tointeger(L, -1)))
                 luaL_error(L, "Invalid value for font_style.");
         } else if (strcmp(key, "border_width") == 0) {
             if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) <= 0)
@@ -111,19 +107,21 @@ int PalayDocument::style(lua_State *L)
             QColor color = getColor(L, -1);
             if (!color.isValid())
                 luaL_error(L, "Invalid color for text_color.");
-            charFormat.setForeground(QBrush(color));
+            charFormat_.setForeground(QBrush(color));
         } else if (strcmp(key, "background_color") == 0) {
             QColor color = getColor(L, -1);
             if (!color.isValid())
                 luaL_error(L, "Invalid color for background_color.");
-            charFormat.setBackground(QBrush(color));
+            charFormat_.setBackground(QBrush(color));
+        } else if (strcmp(key, "alignment") == 0) {
+            Qt::Alignment align = getAlignment(L, -1);
+            blockFormat_.setAlignment(align);
+            tableFormat_.setAlignment(align);
         } else {
             luaL_error(L, "Invalid key in style table: %s", key);
         }
         lua_pop(L, 1);
     }
-
-    cursorStack_.top().mergeCharFormat(charFormat);
 
     return 0;
 }
@@ -268,4 +266,23 @@ QColor PalayDocument::getColor(lua_State *L, int index)
     }  else {
         return luaL_error(L, "Invalid color. Must be a string, integer array or integer.");
     }
+}
+
+Qt::Alignment PalayDocument::getAlignment(lua_State *L, int index)
+{
+    int alignment = luaL_checkinteger(L, index);
+    Qt::Alignment result = 0;
+    if (alignment & Left)
+        result |= Qt::AlignLeft;
+    if (alignment & Right)
+        result |= Qt::AlignRight;
+    if (alignment & HCenter)
+        result |= Qt::AlignHCenter;
+    if (alignment & Top)
+        result |= Qt::AlignTop;
+    if (alignment & Bottom)
+        result |= Qt::AlignBottom;
+    if (alignment & VCenter)
+        result |= Qt::AlignVCenter;
+    return result;
 }
