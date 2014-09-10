@@ -51,10 +51,10 @@ static int style(lua_State *L)
     return doc->style(L);
 }
 
-static int table(lua_State *L)
+static int startTable(lua_State *L)
 {
     PalayDocument *doc = checkDocument(L, 1);
-    return doc->table(L);
+    return doc->startTable(L);
 }
 
 static int cell(lua_State *L)
@@ -97,7 +97,7 @@ static const struct luaL_Reg palaydoc_methods[] = {
     {"paragraph", paragraph},
     {"text", text},
     {"style", style},
-    {"table", table},
+    {"startTable", startTable},
     {"cell", cell},
     {"endTable", endTable},
     {"image", image},

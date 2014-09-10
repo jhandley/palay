@@ -27,6 +27,7 @@ PalayDocument::PalayDocument(QObject *parent) :
     // Qt's default format of 2 is kinda cramped.
     tableFormat_.setCellPadding(4);
     tableFormat_.setBorderBrush(QBrush(Qt::black));
+    tableFormat_.setBorder(1);
     tableFormat_.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
 
 }
@@ -136,11 +137,12 @@ int PalayDocument::saveAs(lua_State *L)
     pdfPrinter.setOutputFormat(QPrinter::PdfFormat);
     pdfPrinter.setColorMode(QPrinter::Color);
 
+    doc_->setPageSize(pdfPrinter.paperSize(QPrinter::Point));
     doc_->print(&pdfPrinter);
     return 0;
 }
 
-int PalayDocument::table(lua_State *L)
+int PalayDocument::startTable(lua_State *L)
 {
     int rows = luaL_checkinteger(L, 2);
     int cols = luaL_checkinteger(L, 3);

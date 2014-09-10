@@ -97,7 +97,7 @@ static int callWithDoc(lua_State *L)
     return nret;
 }
 
-static int runPalayScript(const QString &scriptFilename, const QString &outputFilename, const QString &outputFormat, QPrinter::PageSize pageSize)
+static int runPalayScript(const QString &scriptFilename, const QString &outputFilename, const QString &outputFormat, QPrinter::PaperSize pageSize)
 {
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
     }
 
     QString outputFilename;
-    QPrinter::PageSize pageSize = QPrinter::Letter;
+    QPrinter::PaperSize pageSize = QPrinter::Letter;
     QString outputFormat("pdf");
 
     int opt;

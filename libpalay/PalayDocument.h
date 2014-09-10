@@ -21,7 +21,7 @@ public:
     int style(lua_State *L);
     int saveAs(lua_State *L);
 
-    int table(lua_State *L);
+    int startTable(lua_State *L);
     int cell(lua_State *L);
     int endTable(lua_State *L);
 
