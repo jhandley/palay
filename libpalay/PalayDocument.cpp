@@ -6,6 +6,7 @@
 #include <QTextImageFormat>
 #include <QTextTable>
 #include <QTextTableCell>
+#include <QUrl>
 
 extern "C"
 {
@@ -205,9 +206,19 @@ int PalayDocument::endTable(lua_State *L)
 int PalayDocument::image(lua_State *L)
 {
     const char* name = luaL_checkstring(L, 2);
+    QImage im;
+    if (!im.load(name))
+        luaL_error(L, "Failed to load image from file %s", name);
+
+    doc_->addResource(QTextDocument::ImageResource, QUrl(name), im);
 
     QTextImageFormat imageFormat;
     imageFormat.setName(name);
+    if (lua_gettop(L) >= 3)
+        imageFormat.setWidth(luaL_checkinteger(L, 3));
+    if (lua_gettop(L) >= 4)
+        imageFormat.setHeight(luaL_checkinteger(L, 4));
+
     cursorStack_.top().insertImage(imageFormat);
     return 0;
 }

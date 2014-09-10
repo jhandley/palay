@@ -1,0 +1,15 @@
+paragraph("Image Example")
+paragraph("")
+
+paragraph("Default width/height")
+paragraph("")
+image("pele.png")
+
+paragraph("Width/height specified 100x200")
+paragraph("")
+image("pele.png", 100, 200)
+
+paragraph("Inline with")
+image("pele.png", 10, 20)
+text("text")
+

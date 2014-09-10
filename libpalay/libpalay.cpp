@@ -119,7 +119,7 @@ extern "C" {
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
             app = QSharedPointer<QCoreApplication>(new QGuiApplication(argc, argv));
 #else
-            app = QSharedPointer<QCoreApplication>(new QApplication(argc, argv, false));
+            app = QSharedPointer<QCoreApplication>(new QApplication(argc, argv, true));
 #endif
         }
         luaL_newmetatable(L, docMetatableName);
