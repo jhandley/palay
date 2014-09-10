@@ -34,3 +34,11 @@ paragraph("Underline")
 style({font_style=Bold + Italic + Underline})
 paragraph("Bold + italic + underline")
 
+style({font_family = "Helvetica", font_size=14, font_style=Underline})
+paragraph("Colors")
+style({font_family = "Helvetica", font_size=12, font_style=Normal})
+style({text_color = {255, 0, 0}})
+paragraph("Red")
+style({text_color = 0x00FF00, background_color = "grey"})
+paragraph("Green on grey")
+

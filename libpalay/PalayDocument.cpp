@@ -102,6 +102,21 @@ int PalayDocument::style(lua_State *L)
         } else if (strcmp(key, "border_style") == 0) {
             if (!lua_isnumber(L, -1) || !setBorderStyle(tableFormat_, lua_tointeger(L, -1)))
                 luaL_error(L, "Invalid value for border_style.");
+        } else if (strcmp(key, "border_color") == 0) {
+            QColor color = getColor(L, -1);
+            if (!color.isValid())
+                luaL_error(L, "Invalid color for text_color.");
+            tableFormat_.setBorderBrush(QBrush(color));
+        } else if (strcmp(key, "text_color") == 0) {
+            QColor color = getColor(L, -1);
+            if (!color.isValid())
+                luaL_error(L, "Invalid color for text_color.");
+            charFormat.setForeground(QBrush(color));
+        } else if (strcmp(key, "background_color") == 0) {
+            QColor color = getColor(L, -1);
+            if (!color.isValid())
+                luaL_error(L, "Invalid color for background_color.");
+            charFormat.setBackground(QBrush(color));
         } else {
             luaL_error(L, "Invalid key in style table: %s", key);
         }
@@ -218,4 +233,39 @@ bool PalayDocument::setBorderStyle(QTextTableFormat &format, int style)
     }
 
     return true;
+}
+
+QColor PalayDocument::getColor(lua_State *L, int index)
+{
+    index = index > 0 ? index : lua_gettop(L) + index + 1;
+    if (lua_type(L, index) == LUA_TSTRING) {
+        const char* colorName = lua_tostring(L, index);
+        QColor color(colorName);
+        if (!color.isValid())
+            luaL_error(L, "\"%s\" is not a valid color.", colorName);
+        return color;
+    } else if (lua_type(L, index) == LUA_TNUMBER) {
+        const int colorValue = lua_tointeger(L, index);
+        QColor color(colorValue);
+        if (!color.isValid())
+            luaL_error(L, "%d is not a valid color value.", colorValue);
+        return color;
+    } else if (lua_type(L, index) == LUA_TTABLE) {
+        luaL_checktype(L, index, LUA_TTABLE);
+        size_t len = lua_rawlen(L, index);
+        if (len < 3 || len > 4)
+            luaL_error(L, "Invalid number of entries in color array. Must be an array of 3 (RGB) or 4 (RGBA) numbers.");
+        int rgba[] = {0, 0, 0, 255};
+        for (size_t i = 1; i <= len; ++i) {
+            lua_pushnumber(L, i);
+            lua_gettable(L, -2);
+            if (!lua_isnumber(L, -1))
+                luaL_error(L, "Invalid value in color array. Must be numeric.");
+            rgba[i - 1] = lua_tonumber(L, -1);
+            lua_pop(L,1);
+        }
+        return QColor(rgba[0], rgba[1], rgba[2], rgba[3]);
+    }  else {
+        return luaL_error(L, "Invalid color. Must be a string, integer array or integer.");
+    }
 }

@@ -47,6 +47,7 @@ private:
 
     bool setFontStyle(QTextCharFormat &format, int style);
     bool setBorderStyle(QTextTableFormat &format, int style);
+    QColor getColor(lua_State *L, int index);
 
     QTextDocument *doc_;
     QStack<QTextCursor> cursorStack_;
