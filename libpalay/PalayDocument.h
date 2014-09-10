@@ -25,6 +25,8 @@ public:
     int cell(lua_State *L);
     int endTable(lua_State *L);
 
+    int image(lua_State *L);
+
     enum FontStyle {
         Normal = 0,
         Bold = 1,

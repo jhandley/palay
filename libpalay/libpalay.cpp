@@ -69,6 +69,12 @@ static int endTable(lua_State *L)
     return doc->endTable(L);
 }
 
+static int image(lua_State *L)
+{
+    PalayDocument *doc = checkDocument(L, 1);
+    return doc->image(L);
+}
+
 static int saveAs(lua_State *L)
 {
     PalayDocument *doc = checkDocument(L, 1);
@@ -94,6 +100,7 @@ static const struct luaL_Reg palaydoc_methods[] = {
     {"table", table},
     {"cell", cell},
     {"endTable", endTable},
+    {"image", image},
     {"saveAs", saveAs},
     {"__gc", gc},
     {NULL, NULL}

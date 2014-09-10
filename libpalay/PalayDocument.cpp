@@ -3,6 +3,7 @@
 #include <QPrinter>
 #include <QTextCharFormat>
 #include <QTextBlockFormat>
+#include <QTextImageFormat>
 #include <QTextTable>
 #include <QTextTableCell>
 
@@ -198,6 +199,16 @@ int PalayDocument::endTable(lua_State *L)
     // Saved cursor is in the parent frame of table so moving to last position
     // in that frame moves past end of table.
     cursorStack_.top() = cursorStack_.top().currentFrame()->lastCursorPosition();
+    return 0;
+}
+
+int PalayDocument::image(lua_State *L)
+{
+    const char* name = luaL_checkstring(L, 2);
+
+    QTextImageFormat imageFormat;
+    imageFormat.setName(name);
+    cursorStack_.top().insertImage(imageFormat);
     return 0;
 }
 
