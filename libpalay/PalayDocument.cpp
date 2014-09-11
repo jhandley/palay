@@ -6,6 +6,7 @@
 #include <QTextImageFormat>
 #include <QTextTable>
 #include <QTextTableCell>
+#include <QTextDocumentFragment>
 #include <QUrl>
 
 extern "C"
@@ -235,6 +236,14 @@ int PalayDocument::image(lua_State *L)
         imageFormat.setHeight(luaL_checkinteger(L, 4));
 
     cursorStack_.top().insertImage(imageFormat);
+    return 0;
+}
+
+int PalayDocument::html(lua_State *L)
+{
+    QString htmlText = QString::fromUtf8(luaL_checkstring(L, 2));
+    QTextDocumentFragment fragment = QTextDocumentFragment::fromHtml(htmlText);
+    cursorStack_.top().insertFragment(fragment);
     return 0;
 }
 

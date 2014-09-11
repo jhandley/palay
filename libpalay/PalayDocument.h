@@ -27,6 +27,7 @@ public:
     int endTable(lua_State *L);
 
     int image(lua_State *L);
+    int html(lua_State *L);
 
     int pageSize(lua_State *L);
     int getPageWidth(lua_State *L);
