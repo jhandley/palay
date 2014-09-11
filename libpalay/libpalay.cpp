@@ -81,6 +81,24 @@ static int saveAs(lua_State *L)
     return doc->saveAs(L);
 }
 
+static int pageSize(lua_State *L)
+{
+    PalayDocument *doc = checkDocument(L, 1);
+    return doc->pageSize(L);
+}
+
+static int getPageWidth(lua_State *L)
+{
+    PalayDocument *doc = checkDocument(L, 1);
+    return doc->getPageWidth(L);
+}
+
+static int getPageHeight(lua_State *L)
+{
+    PalayDocument *doc = checkDocument(L, 1);
+    return doc->getPageHeight(L);
+}
+
 static int gc(lua_State *L)
 {
     PalayDocument *doc = checkDocument(L, 1);
@@ -102,6 +120,9 @@ static const struct luaL_Reg palaydoc_methods[] = {
     {"endTable", endTable},
     {"image", image},
     {"saveAs", saveAs},
+    {"getPageWidth", getPageWidth},
+    {"getPageHeight", getPageHeight},
+    {"pageSize", pageSize},
     {"__gc", gc},
     {NULL, NULL}
 };

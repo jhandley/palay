@@ -97,7 +97,8 @@ static int callWithDoc(lua_State *L)
     return nret;
 }
 
-static int runPalayScript(const QString &scriptFilename, const QString &outputFilename, const QString &outputFormat, QPrinter::PaperSize pageSize)
+static int runPalayScript(const QString &scriptFilename, const QString &outputFilename,
+                          const QString &outputFormat, const QString &pageSize)
 {
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
@@ -136,6 +137,15 @@ static int runPalayScript(const QString &scriptFilename, const QString &outputFi
     }
     lua_pop(L, 3);
 
+    // Set the page size
+    lua_getglobal(L, "pageSize");
+    lua_pushstring(L, pageSize.toUtf8());
+    if (lua_pcall(L, 1, 0, 0)) {
+        fprintf(stderr, "Error setting page size.\n%s", lua_tostring(L, -1));
+        return -1;
+    }
+
+    // Run the Lua script
     if (!runLuaScript(L, scriptFilename)) {
         lua_close(L);
         return -1;
@@ -167,7 +177,7 @@ int main(int argc, char *argv[])
     }
 
     QString outputFilename;
-    QPrinter::PaperSize pageSize = QPrinter::Letter;
+    QString pageSize = "Letter";
     QString outputFormat("pdf");
 
     int opt;
@@ -177,14 +187,7 @@ int main(int argc, char *argv[])
             outputFilename = optarg;
             break;
         case 'p':
-            if (strcmp(optarg, "Letter") == 0)
-                pageSize = QPrinter::Letter;
-            else if (strcmp(optarg, "A4") == 0)
-                pageSize = QPrinter::A4;
-            else {
-                fprintf(stderr, "Only 'Letter' and 'A4' are supported\n");
-                return -1;
-            }
+            pageSize = optarg;
             break;
         case 'f':
             if (strcmp(optarg, "pdf") == 0 ||

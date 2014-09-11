@@ -17,7 +17,8 @@ extern "C"
 
 PalayDocument::PalayDocument(QObject *parent) :
     QObject(parent),
-    doc_(new QTextDocument(this))
+    doc_(new QTextDocument(this)),
+    printer_(QPrinter::HighResolution)
 {
     cursorStack_.push(QTextCursor(doc_));
 
@@ -30,6 +31,10 @@ PalayDocument::PalayDocument(QObject *parent) :
     tableFormat_.setBorder(1);
     tableFormat_.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
 
+    printer_.setOutputFormat(QPrinter::PdfFormat);
+    printer_.setColorMode(QPrinter::Color);
+    doc_->setDocumentMargin(0);
+    doc_->setPageSize(printer_.paperSize(QPrinter::Point));
 }
 
 PalayDocument::~PalayDocument()
@@ -125,6 +130,14 @@ int PalayDocument::style(lua_State *L)
             Qt::Alignment align = getAlignment(L, -1);
             blockFormat_.setAlignment(align);
             tableFormat_.setAlignment(align);
+        } else if (strcmp(key, "width") == 0) {
+            if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) <= 0)
+                luaL_error(L, "Invalid value for width. Must be a positive number.");
+            tableFormat_.setWidth(lua_tonumber(L, -1));
+        } else if (strcmp(key, "height") == 0) {
+            if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) <= 0)
+                luaL_error(L, "Invalid value for height. Must be a positive number.");
+            tableFormat_.setHeight(lua_tonumber(L, -1));
         } else {
             luaL_error(L, "Invalid key in style table: %s", key);
         }
@@ -137,13 +150,8 @@ int PalayDocument::style(lua_State *L)
 int PalayDocument::saveAs(lua_State *L)
 {
     const char *path = luaL_checkstring(L, 2);
-    QPrinter pdfPrinter(QPrinter::HighResolution);
-    pdfPrinter.setOutputFileName(QString::fromUtf8(path));
-    pdfPrinter.setOutputFormat(QPrinter::PdfFormat);
-    pdfPrinter.setColorMode(QPrinter::Color);
-
-    doc_->setPageSize(pdfPrinter.paperSize(QPrinter::Point));
-    doc_->print(&pdfPrinter);
+    printer_.setOutputFileName(QString::fromUtf8(path));
+    doc_->print(&printer_);
     return 0;
 }
 
@@ -228,6 +236,35 @@ int PalayDocument::image(lua_State *L)
 
     cursorStack_.top().insertImage(imageFormat);
     return 0;
+}
+
+int PalayDocument::pageSize(lua_State *L)
+{
+    QString sizeString = QString(luaL_checkstring(L, 2)).toUpper();
+    QPrinter::PaperSize size;
+    if (sizeString == "A4")
+        size = QPrinter::A4;
+    else if (sizeString == "LETTER")
+        size = QPrinter::Letter;
+    else
+        luaL_error(L, "\"%s\" is not a valid page size. Try \"Letter\" or \"A4\".", qPrintable(sizeString));
+
+    printer_.setPaperSize(size);
+    doc_->setPageSize(printer_.pageRect(QPrinter::Point).size());
+
+    return 0;
+}
+
+int PalayDocument::getPageWidth(lua_State *L)
+{
+    lua_pushnumber(L, doc_->pageSize().width());
+    return 1;
+}
+
+int PalayDocument::getPageHeight(lua_State *L)
+{
+    lua_pushnumber(L, doc_->pageSize().height());
+    return 1;
 }
 
 bool PalayDocument::setFontStyle(QTextCharFormat &format, int style)

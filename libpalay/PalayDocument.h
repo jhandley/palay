@@ -5,6 +5,7 @@
 #include <QTextDocument>
 #include <QTextTableFormat>
 #include <QStack>
+#include <QPrinter>
 
 struct lua_State;
 class QTextCharFormat;
@@ -26,6 +27,10 @@ public:
     int endTable(lua_State *L);
 
     int image(lua_State *L);
+
+    int pageSize(lua_State *L);
+    int getPageWidth(lua_State *L);
+    int getPageHeight(lua_State *L);
 
     enum FontStyle {
         Normal = 0,
@@ -68,6 +73,7 @@ private:
     QTextTableFormat tableFormat_;
     QTextBlockFormat blockFormat_;
     QTextCharFormat charFormat_;
+    QPrinter printer_;
 };
 
 #endif // PALAYDOCUMENT_H

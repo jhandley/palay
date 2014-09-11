@@ -56,6 +56,17 @@ cell(4, 4)
 text("4, 4")
 endTable()
 
+paragraph("")
+paragraph("Fixed Size: page width x 200 Pt")
+style({width = getPageWidth(), height = 200})
+startTable(5, 2)
+for r = 1, 5 do
+    for c = 1, 2 do
+        cell(r, c)
+        text(string.format("%d, %d", r, c))
+    end
+end
+endTable()
 
 
 
