@@ -221,7 +221,7 @@ int PalayDocument::endTable(lua_State *L)
 
 int PalayDocument::image(lua_State *L)
 {
-    QString name(luaL_checkstring(L, 2));
+    QString name = QString::fromUtf8(luaL_checkstring(L, 2));
     QImage im;
 
     // Check to see if this literal SVG or a filename
