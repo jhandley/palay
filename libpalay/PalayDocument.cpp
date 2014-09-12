@@ -16,6 +16,25 @@ extern "C"
     #include <lualib.h>
 }
 
+Q_GUI_EXPORT extern int qt_defaultDpiX();
+Q_GUI_EXPORT extern int qt_defaultDpiY();
+
+namespace {
+
+    // Convert from points (1/72 inch), the unit for
+    // the palay API, to dots, the unit that the QTextDocument
+    // measurements are in.
+    float pointsToDotsX(float pts)
+    {
+        return pts * qt_defaultDpiX()/72.f;
+    }
+
+    float pointsToDotsY(float pts)
+    {
+        return pts * qt_defaultDpiY()/72.f;
+    }
+
+}
 PalayDocument::PalayDocument(QObject *parent) :
     QObject(parent),
     doc_(new QTextDocument(this)),
@@ -35,7 +54,11 @@ PalayDocument::PalayDocument(QObject *parent) :
     printer_.setOutputFormat(QPrinter::PdfFormat);
     printer_.setColorMode(QPrinter::Color);
     doc_->setDocumentMargin(0);
-    doc_->setPageSize(printer_.paperSize(QPrinter::Point));
+
+    // If we don't set explicit margins, QTextDocument::print will assign
+    // margins that are different from what you would infer from the
+    // printer pageRect. This messes up our page width/height calculations.
+    printer_.setPageMargins(19,13,19,13,QPrinter::Millimeter);
 }
 
 PalayDocument::~PalayDocument()
@@ -96,6 +119,8 @@ int PalayDocument::style(lua_State *L)
         } else if (strcmp(key, "font_size") == 0) {
             if (!lua_isnumber(L, -1) || lua_tointeger(L, -1) <= 0)
                 luaL_error(L, "Invalid value for font_size. Must be a positive number.");
+            // Note that QTextDocument takes font size in points, not dots
+            // even though other measurements are in dots.
             charFormat_.setFontPointSize(lua_tointeger(L, -1));
         } else if (strcmp(key, "font_style") == 0) {
             if (!lua_isnumber(L, -1) || !setFontStyle(charFormat_, lua_tointeger(L, -1)))
@@ -103,7 +128,7 @@ int PalayDocument::style(lua_State *L)
         } else if (strcmp(key, "border_width") == 0) {
             if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) <= 0)
                 luaL_error(L, "Invalid value for border_width. Must be a positive number.");
-            tableFormat_.setBorder(lua_tonumber(L, -1));
+            tableFormat_.setBorder(pointsToDotsX(lua_tonumber(L, -1)));
         } else if (strcmp(key, "border_style") == 0) {
             if (!lua_isnumber(L, -1) || !setBorderStyle(tableFormat_, lua_tointeger(L, -1)))
                 luaL_error(L, "Invalid value for border_style.");
@@ -134,11 +159,11 @@ int PalayDocument::style(lua_State *L)
         } else if (strcmp(key, "width") == 0) {
             if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) <= 0)
                 luaL_error(L, "Invalid value for width. Must be a positive number.");
-            tableFormat_.setWidth(lua_tonumber(L, -1));
+            tableFormat_.setWidth(pointsToDotsX(lua_tonumber(L, -1)));
         } else if (strcmp(key, "height") == 0) {
             if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) <= 0)
                 luaL_error(L, "Invalid value for height. Must be a positive number.");
-            tableFormat_.setHeight(lua_tonumber(L, -1));
+            tableFormat_.setHeight(pointsToDotsY(lua_tonumber(L, -1)));
         } else {
             luaL_error(L, "Invalid key in style table: %s", key);
         }
@@ -238,9 +263,9 @@ int PalayDocument::image(lua_State *L)
     QTextImageFormat imageFormat;
     imageFormat.setName(imageResourceName);
     if (lua_gettop(L) >= 3)
-        imageFormat.setWidth(luaL_checkinteger(L, 3));
+        imageFormat.setWidth(pointsToDotsX(luaL_checkinteger(L, 3)));
     if (lua_gettop(L) >= 4)
-        imageFormat.setHeight(luaL_checkinteger(L, 4));
+        imageFormat.setHeight(pointsToDotsY(luaL_checkinteger(L, 4)));
 
     cursorStack_.top().insertImage(imageFormat);
     return 0;
@@ -266,20 +291,24 @@ int PalayDocument::pageSize(lua_State *L)
         luaL_error(L, "\"%s\" is not a valid page size. Try \"Letter\" or \"A4\".", qPrintable(sizeString));
 
     printer_.setPaperSize(size);
-    doc_->setPageSize(printer_.pageRect(QPrinter::Point).size());
+
+    // Note that we explicitly avoid setting QTextDocument::pageSize to the
+    // printer page size as this causes QTextDocument::print to apply a scale of
+    // 4/3 to convert from QTextDocument to printer coordinates due to the assumption
+    // that QTextDocument is at 96 dpi (qt_defaultDpiX()).
 
     return 0;
 }
 
 int PalayDocument::getPageWidth(lua_State *L)
 {
-    lua_pushnumber(L, doc_->pageSize().width());
+    lua_pushnumber(L, printer_.pageRect(QPrinter::Point).width());
     return 1;
 }
 
 int PalayDocument::getPageHeight(lua_State *L)
 {
-    lua_pushnumber(L, doc_->pageSize().height());
+    lua_pushnumber(L, printer_.pageRect(QPrinter::Point).height());
     return 1;
 }
 
