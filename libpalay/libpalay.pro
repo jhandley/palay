@@ -19,13 +19,15 @@ TEMPLATE = lib
 DEFINES += LIBPALAY_LIBRARY
 
 SOURCES += PalayDocument.cpp \
-           libpalay.cpp
+           libpalay.cpp \
+    AbsoluteBlock.cpp
 
 
 HEADERS +=\
         libpalay_global.h \
         PalayDocument.h \
-        libpalay.h
+        libpalay.h \
+    AbsoluteBlock.h
 
 unix:cross_compile {
     LIBS += -llua -ldl

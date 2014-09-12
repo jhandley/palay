@@ -8,6 +8,9 @@
 #include <QTextTableCell>
 #include <QTextDocumentFragment>
 #include <QUrl>
+#include <QAbstractTextDocumentLayout>
+#include <QPainter>
+#include <AbsoluteBlock.h>
 
 extern "C"
 {
@@ -59,6 +62,8 @@ PalayDocument::PalayDocument(QObject *parent) :
     // margins that are different from what you would infer from the
     // printer pageRect. This messes up our page width/height calculations.
     printer_.setPageMargins(19,13,19,13,QPrinter::Millimeter);
+
+    setPageSize(QPrinter::Letter);
 }
 
 PalayDocument::~PalayDocument()
@@ -177,7 +182,7 @@ int PalayDocument::saveAs(lua_State *L)
 {
     const char *path = luaL_checkstring(L, 2);
     printer_.setOutputFileName(QString::fromUtf8(path));
-    doc_->print(&printer_);
+    print();
     return 0;
 }
 
@@ -277,6 +282,7 @@ int PalayDocument::image(lua_State *L)
         imageFormat.setHeight(pointsToDotsY(luaL_checkinteger(L, 4)));
 
     cursorStack_.top().insertImage(imageFormat);
+
     return 0;
 }
 
@@ -299,12 +305,7 @@ int PalayDocument::pageSize(lua_State *L)
     else
         luaL_error(L, "\"%s\" is not a valid page size. Try \"Letter\" or \"A4\".", qPrintable(sizeString));
 
-    printer_.setPaperSize(size);
-
-    // Note that we explicitly avoid setting QTextDocument::pageSize to the
-    // printer page size as this causes QTextDocument::print to apply a scale of
-    // 4/3 to convert from QTextDocument to printer coordinates due to the assumption
-    // that QTextDocument is at 96 dpi (qt_defaultDpiX()).
+    setPageSize(size);
 
     return 0;
 }
@@ -405,4 +406,60 @@ Qt::Alignment PalayDocument::getAlignment(lua_State *L, int index)
     if (alignment & VCenter)
         result |= Qt::AlignVCenter;
     return result;
+}
+
+void PalayDocument::setPageSize(QPrinter::PaperSize size)
+{
+    printer_.setPaperSize(size);
+
+    // Need to set document page size to match printer page size so that document
+    // gets paginated and the pageCount() method will work correctly.
+    doc_->setPageSize(QSizeF(printer_.pageRect(QPrinter::Inch).width() * qt_defaultDpiX(),
+                             printer_.pageRect(QPrinter::Inch).height() * qt_defaultDpiY()));
+}
+
+void PalayDocument::print()
+{
+    QPainter painter(&printer_);
+
+    // Scale to printer dpi
+    const qreal dpiScaleX = qreal(printer_.logicalDpiX()) / qt_defaultDpiX();
+    const qreal dpiScaleY = qreal(printer_.logicalDpiY()) / qt_defaultDpiY();
+    painter.scale(dpiScaleX, dpiScaleY);
+
+    QRect body = QRect(QPoint(0, 0), QSize(doc_->pageSize().width(), doc_->pageSize().height()));
+    //int totalPages = doc_->pageCount();
+    QAbstractTextDocumentLayout *layout = doc_->documentLayout();
+
+    for (int pageNumber = 1; pageNumber <= doc_->pageCount(); ++pageNumber) {
+
+        painter.save();
+        painter.translate(body.left(), body.top() - (pageNumber - 1) * body.height());
+        QRect view(0, (pageNumber - 1) * body.height(), body.width(), body.height());
+        QAbstractTextDocumentLayout::PaintContext ctx;
+        painter.setClipRect(view);
+        ctx.clip = view;
+
+        layout->draw(&painter, ctx);
+
+        painter.translate(0, view.top());
+        drawAbsoluteBlocks(&painter, pageNumber);
+
+        painter.restore();
+        if (pageNumber != doc_->pageCount())
+            printer_.newPage();
+    }
+    painter.end();
+}
+
+void PalayDocument::drawAbsoluteBlocks(QPainter *painter, int pageNumber)
+{
+    QRectF pageBounds(0, 0, doc_->pageSize().width(), doc_->pageSize().height() * (pageNumber - 1));
+
+    foreach (AbsoluteBlock *block, absoluteBlocks_) {
+        QRectF blockBounds = block->bounds();
+        if (pageBounds.intersects(blockBounds)) {
+            block->draw(painter);
+        }
+    }
 }

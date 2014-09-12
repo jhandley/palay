@@ -9,6 +9,7 @@
 
 struct lua_State;
 class QTextCharFormat;
+class AbsoluteBlock;
 
 class PalayDocument : public QObject
 {
@@ -69,6 +70,10 @@ private:
     bool setBorderStyle(QTextTableFormat &format, int style);
     QColor getColor(lua_State *L, int index);
     Qt::Alignment getAlignment(lua_State *L, int index);
+    void setPageSize(QPrinter::PaperSize size);
+
+    void print();
+    void drawAbsoluteBlocks(QPainter *painter, int pageNumber);
 
     QTextDocument *doc_;
     QStack<QTextCursor> cursorStack_;
@@ -76,6 +81,7 @@ private:
     QTextBlockFormat blockFormat_;
     QTextCharFormat charFormat_;
     QPrinter printer_;
+    QList<AbsoluteBlock*> absoluteBlocks_;
 };
 
 #endif // PALAYDOCUMENT_H
