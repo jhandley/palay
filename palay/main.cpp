@@ -12,6 +12,7 @@ extern "C"
 #include <QPrinter>
 #include <QFile>
 #include "libpalay.h"
+#include <QTextStream>
 
 static void usage(const char *argv0)
 {
@@ -34,16 +35,8 @@ static int pushLuaStackTrace(lua_State *L)
     return 1;
 }
 
-static bool runLuaScript(lua_State *L, const QString &scriptFilename)
+static bool runLuaScript(lua_State *L, const QByteArray &script, const QString &scriptFilename)
 {
-    QFile scriptFile(scriptFilename);
-    if (!scriptFile.open(QFile::ReadOnly)) {
-        fprintf(stderr, "Error opening file %s: %s", qPrintable(scriptFilename), qPrintable(scriptFile.errorString()));
-        return -1;
-    }
-
-    QByteArray script = scriptFile.readAll();
-
     lua_pushcfunction(L, pushLuaStackTrace);
     int errhandlerIndex = lua_gettop(L);
 
@@ -97,8 +90,9 @@ static int callWithDoc(lua_State *L)
     return nret;
 }
 
-static int runPalayScript(const QString &scriptFilename, const QString &outputFilename,
-                          const QString &outputFormat, const QString &pageSize)
+static int runPalayScript(const QByteArray &script, const QString &scriptFilename,
+                          const QString &outputFilename, const QString &outputFormat,
+                          const QString &pageSize)
 {
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
@@ -146,7 +140,7 @@ static int runPalayScript(const QString &scriptFilename, const QString &outputFi
     }
 
     // Run the Lua script
-    if (!runLuaScript(L, scriptFilename)) {
+    if (!runLuaScript(L, script, scriptFilename)) {
         lua_close(L);
         return -1;
     }
@@ -170,11 +164,6 @@ int main(int argc, char *argv[])
 #else
     QApplication a(argc, argv, true);
 #endif
-
-    if (argc < 2) {
-        usage(argv[0]);
-        return -1;
-    }
 
     QString outputFilename;
     QString pageSize = "Letter";
@@ -208,15 +197,33 @@ int main(int argc, char *argv[])
     }
 
     if (outputFilename.isNull()) {
-        fprintf(stderr, "Missing output file name\n");
-        return -1;
-    }
-    if (optind + 1 > argc) {
         usage(argv[0]);
         return -1;
     }
 
-    QString scriptFilename = argv[optind];
-    return runPalayScript(scriptFilename, outputFilename, outputFormat, pageSize);
+    QByteArray script;
+    QString scriptFilename;
 
+    if (optind == argc - 1) {
+        scriptFilename = argv[optind];
+
+        QFile scriptFile(scriptFilename);
+        if (!scriptFile.open(QFile::ReadOnly)) {
+            fprintf(stderr, "Error opening file %s: %s", qPrintable(scriptFilename), qPrintable(scriptFile.errorString()));
+            return -1;
+        }
+
+        script = scriptFile.readAll();
+
+    } else if (optind == argc) {
+        QFile in;
+        in.open(stdin, QIODevice::ReadOnly);
+        scriptFilename = "stdin";
+        script = in.readAll();
+    } else {
+        usage(argv[0]);
+        return -1;
+    }
+
+    return runPalayScript(script, scriptFilename, outputFilename, outputFormat, pageSize);
 }
