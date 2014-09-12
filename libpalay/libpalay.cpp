@@ -105,6 +105,12 @@ static int getPageHeight(lua_State *L)
     return doc->getPageHeight(L);
 }
 
+static int pageBreak(lua_State *L)
+{
+    PalayDocument *doc = checkDocument(L, 1);
+    return doc->pageBreak(L);
+}
+
 static int gc(lua_State *L)
 {
     PalayDocument *doc = checkDocument(L, 1);
@@ -130,6 +136,7 @@ static const struct luaL_Reg palaydoc_methods[] = {
     {"getPageWidth", getPageWidth},
     {"getPageHeight", getPageHeight},
     {"pageSize", pageSize},
+    {"pageBreak", pageBreak},
     {"__gc", gc},
     {NULL, NULL}
 };

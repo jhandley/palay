@@ -244,6 +244,15 @@ int PalayDocument::endTable(lua_State *L)
     return 0;
 }
 
+int PalayDocument::pageBreak(lua_State *L)
+{
+    Q_UNUSED(L);
+    QTextBlockFormat breakBlock;
+    breakBlock.setPageBreakPolicy(QTextBlockFormat::PageBreak_AlwaysAfter);
+    cursorStack_.top().insertBlock(breakBlock);
+    return 0;
+}
+
 int PalayDocument::image(lua_State *L)
 {
     QString name = QString::fromUtf8(luaL_checkstring(L, 2));

@@ -26,6 +26,7 @@ public:
     int cell(lua_State *L);
     int endTable(lua_State *L);
 
+    int pageBreak(lua_State *L);
     int image(lua_State *L);
     int html(lua_State *L);
 
