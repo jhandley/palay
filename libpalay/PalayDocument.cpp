@@ -347,6 +347,10 @@ int PalayDocument::startBlock(lua_State *L)
     float y = pointsToDotsY(luaL_checkinteger(L, 3));
     AbsoluteBlock *block = new AbsoluteBlock(QPointF(x,y), this);
     absoluteBlocks_ << block;
+
+    // Make block content word wrap
+    block->document()->setTextWidth(doc_->pageSize().width() - x);
+
     QTextCursor blockCursor(block->document());
     blockCursor.setBlockFormat(blockFormat_);
     blockCursor.setCharFormat(charFormat_);

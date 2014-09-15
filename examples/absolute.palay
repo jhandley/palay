@@ -35,7 +35,7 @@ for i = 1, getPageCount() do
     endBlock()
 
     startBlock(getPageWidth()-75, pageTop)
-    text("top right")
+    text("top right and a bunch of other stuff to make this kinda long")
     endBlock()
 
     startBlock(0, pageBottom-25)
