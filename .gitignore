@@ -6,6 +6,7 @@
 
 # Compiled Dynamic libraries
 *.so
+*.so.*
 *.dylib
 *.dll
 
@@ -19,3 +20,10 @@
 *.exe
 *.out
 *.app
+/palay/palay
+
+# Qt created files
+palay.pro.user
+Makefile
+moc_*.cpp
+qrc_*.cpp
