@@ -136,6 +136,19 @@ static int runPalayScript(const QByteArray &script, const QString &scriptFilenam
     lua_pushstring(L, pageSize.toUtf8());
     if (lua_pcall(L, 1, 0, 0)) {
         fprintf(stderr, "Error setting page size.\n%s", lua_tostring(L, -1));
+        lua_close(L);
+        return -1;
+    }
+
+    // Run the init script
+    QFile initScriptFile(":/resources/scripts/init.lua");
+    if (!initScriptFile.open(QFile::ReadOnly)) {
+        fprintf(stderr, "Error in init script.\n%s", lua_tostring(L, -1));
+        lua_close(L);
+        return -1;
+    }
+    if (!runLuaScript(L, initScriptFile.readAll(), "init.lua")) {
+        lua_close(L);
         return -1;
     }
 

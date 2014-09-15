@@ -42,3 +42,5 @@ unix {
 RESOURCES += \
     palay.qrc
 
+OTHER_FILES += \
+    resources/scripts/init.lua

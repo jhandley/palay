@@ -51,6 +51,18 @@ static int style(lua_State *L)
     return doc->style(L);
 }
 
+static int pushStyle(lua_State *L)
+{
+    PalayDocument *doc = checkDocument(L, 1);
+    return doc->pushStyle(L);
+}
+
+static int popStyle(lua_State *L)
+{
+    PalayDocument *doc = checkDocument(L, 1);
+    return doc->popStyle(L);
+}
+
 static int startTable(lua_State *L)
 {
     PalayDocument *doc = checkDocument(L, 1);
@@ -111,6 +123,12 @@ static int getPageHeight(lua_State *L)
     return doc->getPageHeight(L);
 }
 
+static int getPageMargins(lua_State *L)
+{
+    PalayDocument *doc = checkDocument(L, 1);
+    return doc->getPageMargins(L);
+}
+
 static int getPageCount(lua_State *L)
 {
     PalayDocument *doc = checkDocument(L, 1);
@@ -151,6 +169,8 @@ static const struct luaL_Reg palaydoc_methods[] = {
     {"paragraph", paragraph},
     {"text", text},
     {"style", style},
+    {"pushStyle", pushStyle},
+    {"popStyle", popStyle},
     {"startTable", startTable},
     {"cell", cell},
     {"endTable", endTable},
@@ -159,6 +179,7 @@ static const struct luaL_Reg palaydoc_methods[] = {
     {"saveAs", saveAs},
     {"getPageWidth", getPageWidth},
     {"getPageHeight", getPageHeight},
+    {"getPageMargins", getPageMargins},
     {"getPageCount", getPageCount},
     {"pageSize", pageSize},
     {"pageMargins", pageMargins},

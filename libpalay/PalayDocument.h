@@ -21,6 +21,8 @@ public:
     int paragraph(lua_State *L);
     int text(lua_State *L);
     int style(lua_State *L);
+    int pushStyle(lua_State *L);
+    int popStyle(lua_State *L);
     int saveAs(lua_State *L);
 
     int startTable(lua_State *L);
@@ -35,6 +37,7 @@ public:
     int pageMargins(lua_State *L);
     int getPageWidth(lua_State *L);
     int getPageHeight(lua_State *L);
+    int getPageMargins(lua_State *L);
     int getPageCount(lua_State *L);
 
     int startBlock(lua_State *L);
@@ -72,7 +75,7 @@ public slots:
 private:
 
     bool setFontStyle(QTextCharFormat &format, int style);
-    bool setBorderStyle(QTextTableFormat &format, int style);
+    QTextFrameFormat::BorderStyle getBorderStyle(lua_State *L, int index);
     QColor getColor(lua_State *L, int index);
     Qt::Alignment getAlignment(lua_State *L, int index);
     Qt::Corner getCorner(lua_State *L, int index);
@@ -82,13 +85,18 @@ private:
     void print();
     void drawAbsoluteBlocks(QPainter *painter, const QRectF &view);
 
+    struct Formats {
+        QTextTableFormat table_;
+        QTextBlockFormat block_;
+        QTextCharFormat char_;
+        QTextFrameFormat frame_;
+    };
+
     QTextDocument *doc_;
     QStack<QTextCursor> cursorStack_;
-    QTextTableFormat tableFormat_;
-    QTextBlockFormat blockFormat_;
-    QTextCharFormat charFormat_;
     QPrinter printer_;
     QList<AbsoluteBlock*> absoluteBlocks_;
+    QStack<Formats> formatStack_;
 };
 
 #endif // PALAYDOCUMENT_H

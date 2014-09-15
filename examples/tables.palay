@@ -2,6 +2,7 @@
 style({font_family = "Helvetica", font_size=14, font_style=Bold})
 paragraph("Table Examples")
 
+local leftMargin, topMargin, rightMargin, bottomMargin = getPageMargins()
 
 style({font_size=9, font_style=Normal})
 
@@ -58,7 +59,7 @@ endTable()
 
 paragraph("")
 paragraph("Fixed Size: page width x 200 Pt")
-style({width = getPageWidth(), height = 200})
+style({width = getPageWidth()-leftMargin-rightMargin, height = 200})
 startTable(5, 2)
 for r = 1, 5 do
     for c = 1, 2 do

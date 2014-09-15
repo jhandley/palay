@@ -4,6 +4,7 @@
 #include <QTextCharFormat>
 #include <QTextBlockFormat>
 #include <QTextImageFormat>
+#include <QTextFrameFormat>
 #include <QTextTable>
 #include <QTextTableCell>
 #include <QTextDocumentFragment>
@@ -37,6 +38,16 @@ namespace {
         return pts * qt_defaultDpiY()/72.f;
     }
 
+    float dotsToPointsX(float dots)
+    {
+        return dots * 72.f/qt_defaultDpiX();
+    }
+
+    float dotsToPointsY(float dots)
+    {
+        return dots * 72.f/qt_defaultDpiY();
+    }
+
 }
 PalayDocument::PalayDocument(QObject *parent) :
     QObject(parent),
@@ -45,14 +56,19 @@ PalayDocument::PalayDocument(QObject *parent) :
 {
     cursorStack_.push(QTextCursor(doc_));
 
+    Formats defaultFormat;
+
     // Qt's default spacing of 2 causes screwy looking borders since there
     // is space between the borders of adjacent cells.
-    tableFormat_.setCellSpacing(0);
+    defaultFormat.table_.setCellSpacing(0);
     // Qt's default format of 2 is kinda cramped.
-    tableFormat_.setCellPadding(4);
-    tableFormat_.setBorderBrush(QBrush(Qt::black));
-    tableFormat_.setBorder(1);
-    tableFormat_.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
+    defaultFormat.table_.setCellPadding(4);
+    defaultFormat.table_.setBorderBrush(QBrush(Qt::black));
+    defaultFormat.table_.setBorder(1);
+    defaultFormat.table_.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
+
+    defaultFormat.frame_.setBorderStyle(QTextFrameFormat::BorderStyle_None);
+    formatStack_.push(defaultFormat);
 
     printer_.setOutputFormat(QPrinter::PdfFormat);
     printer_.setColorMode(QPrinter::Color);
@@ -76,7 +92,7 @@ PalayDocument::~PalayDocument()
 
 int PalayDocument::paragraph(lua_State *L)
 {
-    cursorStack_.top().insertBlock(blockFormat_);
+    cursorStack_.top().insertBlock(formatStack_.top().block_);
     text(L);
     return 0;
 }
@@ -84,7 +100,7 @@ int PalayDocument::paragraph(lua_State *L)
 int PalayDocument::text(lua_State *L)
 {
     const char *text = luaL_checkstring(L, 2);
-    cursorStack_.top().insertText(QString::fromUtf8(text), charFormat_);
+    cursorStack_.top().insertText(QString::fromUtf8(text), formatStack_.top().char_);
     return 0;
 }
 
@@ -124,61 +140,98 @@ int PalayDocument::style(lua_State *L)
         if (strcmp(key, "font_family") == 0) {
             if (!lua_isstring(L, -1))
                 luaL_error(L, "Invalid value for font_family. Must be a string.");
-            charFormat_.setFontFamily(lua_tostring(L, -1));
+            formatStack_.top().char_.setFontFamily(lua_tostring(L, -1));
         } else if (strcmp(key, "font_size") == 0) {
             if (!lua_isnumber(L, -1) || lua_tointeger(L, -1) <= 0)
                 luaL_error(L, "Invalid value for font_size. Must be a positive number.");
             // Note that QTextDocument takes font size in points, not dots
             // even though other measurements are in dots.
-            charFormat_.setFontPointSize(lua_tointeger(L, -1));
+            formatStack_.top().char_.setFontPointSize(lua_tointeger(L, -1));
         } else if (strcmp(key, "font_style") == 0) {
-            if (!lua_isnumber(L, -1) || !setFontStyle(charFormat_, lua_tointeger(L, -1)))
+            if (!lua_isnumber(L, -1) || !setFontStyle(formatStack_.top().char_, lua_tointeger(L, -1)))
                 luaL_error(L, "Invalid value for font_style.");
         } else if (strcmp(key, "border_width") == 0) {
             if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) <= 0)
                 luaL_error(L, "Invalid value for border_width. Must be a positive number.");
-            tableFormat_.setBorder(pointsToDotsX(lua_tonumber(L, -1)));
+            qreal border = pointsToDotsX(lua_tonumber(L, -1));
+            formatStack_.top().table_.setBorder(border);
+            formatStack_.top().frame_.setBorder(border);
         } else if (strcmp(key, "border_style") == 0) {
-            if (!lua_isnumber(L, -1) || !setBorderStyle(tableFormat_, lua_tointeger(L, -1)))
-                luaL_error(L, "Invalid value for border_style.");
+            QTextFrameFormat::BorderStyle borderStyle = getBorderStyle(L, -1);
+            formatStack_.top().table_.setBorderStyle(borderStyle);
+            formatStack_.top().frame_.setBorderStyle(borderStyle);
         } else if (strcmp(key, "border_color") == 0) {
             QColor color = getColor(L, -1);
             if (!color.isValid())
                 luaL_error(L, "Invalid color for text_color.");
-            tableFormat_.setBorderBrush(QBrush(color));
+            formatStack_.top().table_.setBorderBrush(QBrush(color));
+            formatStack_.top().frame_.setBorderBrush(QBrush(color));
         } else if (strcmp(key, "text_color") == 0) {
             QColor color = getColor(L, -1);
             if (!color.isValid())
                 luaL_error(L, "Invalid color for text_color.");
-            charFormat_.setForeground(QBrush(color));
+            formatStack_.top().char_.setForeground(QBrush(color));
         } else if (strcmp(key, "text_background_color") == 0) {
             QColor color = getColor(L, -1);
             if (!color.isValid())
                 luaL_error(L, "Invalid color for background_color.");
-            charFormat_.setBackground(QBrush(color));
+            formatStack_.top().char_.setBackground(QBrush(color));
         } else if (strcmp(key, "background_color") == 0) {
             QColor color = getColor(L, -1);
             if (!color.isValid())
                 luaL_error(L, "Invalid color for background_color.");
-            blockFormat_.setBackground(QBrush(color));
+            formatStack_.top().block_.setBackground(QBrush(color));
         } else if (strcmp(key, "alignment") == 0) {
             Qt::Alignment align = getAlignment(L, -1);
-            blockFormat_.setAlignment(align);
-            tableFormat_.setAlignment(align);
+            formatStack_.top().block_.setAlignment(align);
+            formatStack_.top().table_.setAlignment(align);
         } else if (strcmp(key, "width") == 0) {
-            if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) <= 0)
-                luaL_error(L, "Invalid value for width. Must be a positive number.");
-            tableFormat_.setWidth(pointsToDotsX(lua_tonumber(L, -1)));
-        } else if (strcmp(key, "height") == 0) {
-            if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) <= 0)
-                luaL_error(L, "Invalid value for height. Must be a positive number.");
-            tableFormat_.setHeight(pointsToDotsY(lua_tonumber(L, -1)));
+            if (!lua_isnumber(L, -1) || (lua_tonumber(L, -1) <= 0 && lua_tonumber(L, -1) != -1))
+                luaL_error(L, "Invalid value for width. Must be a positive number or -1 for variable.");
+            qreal widthPoints = lua_tonumber(L, -1);
+            if (widthPoints == -1) {
+                // variable
+                formatStack_.top().table_.setWidth(QTextLength());
+                formatStack_.top().frame_.setWidth(QTextLength());
+            } else {
+                qreal widthDots = pointsToDotsX(widthPoints);
+                formatStack_.top().table_.setWidth(widthDots);
+                formatStack_.top().frame_.setWidth(widthDots);
+            }
+         } else if (strcmp(key, "height") == 0) {
+            if (!lua_isnumber(L, -1) || (lua_tonumber(L, -1) <= 0 && lua_tonumber(L, -1) != -1))
+                luaL_error(L, "Invalid value for height. Must be a positive number or -1 for variable.");
+            qreal heightPoints = lua_tonumber(L, -1);
+            if (heightPoints == -1) {
+                // variable
+                formatStack_.top().table_.setHeight(QTextLength());
+                formatStack_.top().frame_.setHeight(QTextLength());
+            } else {
+                qreal heightDots = pointsToDotsY(heightPoints);
+                formatStack_.top().table_.setHeight(heightDots);
+                formatStack_.top().frame_.setHeight(heightDots);
+            }
         } else {
             luaL_error(L, "Invalid key in style table: %s", key);
         }
         lua_pop(L, 1);
     }
 
+    return 0;
+}
+
+int PalayDocument::pushStyle(lua_State *L)
+{
+    formatStack_.push(formatStack_.top());
+    style(L);
+    return 0;
+}
+
+int PalayDocument::popStyle(lua_State *L)
+{
+    if (formatStack_.size() < 2)
+        luaL_error(L, "popStyle called with no matching pushStyle");
+    formatStack_.pop();
     return 0;
 }
 
@@ -206,7 +259,7 @@ int PalayDocument::startTable(lua_State *L)
     // of the table when endTable is called.
     cursorStack_.push(cursorStack_.top());
 
-    cursorStack_.top().insertTable(rows, cols, tableFormat_);
+    cursorStack_.top().insertTable(rows, cols, formatStack_.top().table_);
 
     return 0;
 }
@@ -335,6 +388,16 @@ int PalayDocument::getPageHeight(lua_State *L)
     return 1;
 }
 
+int PalayDocument::getPageMargins(lua_State *L)
+{
+    QTextFrameFormat rootFormat = doc_->rootFrame()->frameFormat();
+    lua_pushnumber(L, dotsToPointsX(rootFormat.leftMargin()));
+    lua_pushnumber(L, dotsToPointsY(rootFormat.topMargin()));
+    lua_pushnumber(L, dotsToPointsX(rootFormat.rightMargin()));
+    lua_pushnumber(L, dotsToPointsY(rootFormat.bottomMargin()));
+    return 4;
+}
+
 int PalayDocument::getPageCount(lua_State *L)
 {
     lua_pushinteger(L, doc_->pageCount());
@@ -349,9 +412,10 @@ int PalayDocument::startBlock(lua_State *L)
     AbsoluteBlock *block = new AbsoluteBlock(corner, QPointF(x,y), doc_->pageSize(), this);
     absoluteBlocks_ << block;
 
+    block->document()->rootFrame()->setFrameFormat(formatStack_.top().frame_);
     QTextCursor blockCursor(block->document());
-    blockCursor.setBlockFormat(blockFormat_);
-    blockCursor.setCharFormat(charFormat_);
+    blockCursor.setBlockFormat(formatStack_.top().block_);
+    blockCursor.setCharFormat(formatStack_.top().char_);
     cursorStack_.push(blockCursor);
 
     return 0;
@@ -376,26 +440,25 @@ bool PalayDocument::setFontStyle(QTextCharFormat &format, int style)
     return true;
 }
 
-bool PalayDocument::setBorderStyle(QTextTableFormat &format, int style)
+QTextFrameFormat::BorderStyle PalayDocument::getBorderStyle(lua_State *L, int index)
 {
+    int style = luaL_checkinteger(L, index);
     switch (style) {
     case None:
-        format.setBorderStyle(QTextFrameFormat::BorderStyle_None);
+        return QTextFrameFormat::BorderStyle_None;
         break;
     case Dotted:
-        format.setBorderStyle(QTextFrameFormat::BorderStyle_Dotted);
+        return QTextFrameFormat::BorderStyle_Dotted;
         break;
     case Dashed:
-        format.setBorderStyle(QTextFrameFormat::BorderStyle_Dashed);
+        return QTextFrameFormat::BorderStyle_Dashed;
         break;
     case Solid:
-        format.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
+        return QTextFrameFormat::BorderStyle_Solid;
         break;
     default:
-        return false;
+        return (QTextFrameFormat::BorderStyle) luaL_error(L, "Invalid value for border_style.");
     }
-
-    return true;
 }
 
 QColor PalayDocument::getColor(lua_State *L, int index)
