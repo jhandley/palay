@@ -32,6 +32,7 @@ public:
     int html(lua_State *L);
 
     int pageSize(lua_State *L);
+    int pageMargins(lua_State *L);
     int getPageWidth(lua_State *L);
     int getPageHeight(lua_State *L);
     int getPageCount(lua_State *L);
@@ -75,6 +76,7 @@ private:
     QColor getColor(lua_State *L, int index);
     Qt::Alignment getAlignment(lua_State *L, int index);
     void setPageSize(QPrinter::PaperSize size);
+    void setPageMargins(float left, float top, float right, float bottom);
 
     void print();
     void drawAbsoluteBlocks(QPainter *painter, const QRectF &view);

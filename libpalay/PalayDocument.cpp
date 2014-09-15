@@ -58,11 +58,15 @@ PalayDocument::PalayDocument(QObject *parent) :
     printer_.setColorMode(QPrinter::Color);
     doc_->setDocumentMargin(0);
 
-    // If we don't set explicit margins, QTextDocument::print will assign
-    // margins that are different from what you would infer from the
-    // printer pageRect. This messes up our page width/height calculations.
-    printer_.setPageMargins(19,13,19,13,QPrinter::Millimeter);
-
+    // We set margins on the document root frame, not on
+    // the printer. This way we can position absolute blocks
+    // outside the margin for stuff like page numbers
+    // and footnotes.
+    printer_.setPageMargins(0,0,0,0,QPrinter::Millimeter);
+    setPageMargins(pointsToDotsX(54),
+                   pointsToDotsY(37),
+                   pointsToDotsX(54),
+                   pointsToDotsY(37));
     setPageSize(QPrinter::Letter);
 }
 
@@ -310,6 +314,15 @@ int PalayDocument::pageSize(lua_State *L)
     return 0;
 }
 
+int PalayDocument::pageMargins(lua_State *L)
+{
+    setPageMargins(pointsToDotsX(luaL_checkinteger(L, 2)),
+                   pointsToDotsY(luaL_checkinteger(L, 3)),
+                   pointsToDotsY(luaL_checkinteger(L, 4)),
+                   pointsToDotsY(luaL_checkinteger(L, 5)));
+    return 0;
+}
+
 int PalayDocument::getPageWidth(lua_State *L)
 {
     lua_pushnumber(L, printer_.pageRect(QPrinter::Point).width());
@@ -445,6 +458,17 @@ void PalayDocument::setPageSize(QPrinter::PaperSize size)
     // gets paginated and the pageCount() method will work correctly.
     doc_->setPageSize(QSizeF(printer_.pageRect(QPrinter::Inch).width() * qt_defaultDpiX(),
                              printer_.pageRect(QPrinter::Inch).height() * qt_defaultDpiY()));
+}
+
+void PalayDocument::setPageMargins(float left, float top, float right, float bottom)
+{
+    QTextFrameFormat rootFormat = doc_->rootFrame()->frameFormat();
+    rootFormat.setLeftMargin(left);
+    rootFormat.setTopMargin(top);
+    rootFormat.setRightMargin(right);
+    rootFormat.setBottomMargin(bottom);
+    doc_->rootFrame()->setFrameFormat(rootFormat);
+
 }
 
 void PalayDocument::print()

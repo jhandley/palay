@@ -34,7 +34,7 @@ for i = 1, getPageCount() do
     text("top left")
     endBlock()
 
-    startBlock(getPageWidth()-60, pageTop)
+    startBlock(getPageWidth()-75, pageTop)
     text("top right")
     endBlock()
 
@@ -42,7 +42,7 @@ for i = 1, getPageCount() do
     text("bottom left")
     endBlock()
 
-    startBlock(getPageWidth()-60, pageBottom-25)
+    startBlock(getPageWidth()-75, pageBottom-25)
     text("bottom right")
     endBlock()
 end
