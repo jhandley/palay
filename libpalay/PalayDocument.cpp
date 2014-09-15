@@ -343,13 +343,11 @@ int PalayDocument::getPageCount(lua_State *L)
 
 int PalayDocument::startBlock(lua_State *L)
 {
-    float x = pointsToDotsX(luaL_checkinteger(L, 2));
-    float y = pointsToDotsY(luaL_checkinteger(L, 3));
-    AbsoluteBlock *block = new AbsoluteBlock(QPointF(x,y), this);
+    Qt::Corner corner = getCorner(L, 2);
+    float x = pointsToDotsX(luaL_checkinteger(L, 3));
+    float y = pointsToDotsY(luaL_checkinteger(L, 4));
+    AbsoluteBlock *block = new AbsoluteBlock(corner, QPointF(x,y), doc_->pageSize(), this);
     absoluteBlocks_ << block;
-
-    // Make block content word wrap
-    block->document()->setTextWidth(doc_->pageSize().width() - x);
 
     QTextCursor blockCursor(block->document());
     blockCursor.setBlockFormat(blockFormat_);
@@ -452,6 +450,21 @@ Qt::Alignment PalayDocument::getAlignment(lua_State *L, int index)
     if (alignment & VCenter)
         result |= Qt::AlignVCenter;
     return result;
+}
+
+Qt::Corner PalayDocument::getCorner(lua_State *L, int index)
+{
+    QString cornerString = QString(luaL_checkstring(L, index)).toUpper();
+    if (cornerString == "TOPLEFT")
+        return Qt::TopLeftCorner;
+    else if (cornerString == "TOPRIGHT")
+        return Qt::TopRightCorner;
+    else if (cornerString == "BOTTOMLEFT")
+        return Qt::BottomLeftCorner;
+    else if (cornerString == "BOTTOMRIGHT")
+        return Qt::BottomRightCorner;
+    else
+        return (Qt::Corner) luaL_error(L, "%s is not a valid corner. Try \"TopLeft\", \"TopRight\", \"BottomLeft\" or \"BottomRight\"", qPrintable(cornerString));
 }
 
 void PalayDocument::setPageSize(QPrinter::PaperSize size)

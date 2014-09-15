@@ -12,9 +12,11 @@ class AbsoluteBlock : public QObject
     Q_OBJECT
 public:
 
-    explicit AbsoluteBlock(const QPointF& pos, QObject *parent = 0);
+    explicit AbsoluteBlock(Qt::Corner corner, const QPointF& pos, const QSizeF &parentSize, QObject *parent = 0);
 
     QTextDocument *document();
+
+    QPointF absolutePosition();
 
     QRectF bounds();
 
@@ -27,9 +29,9 @@ public slots:
 private:
 
     QTextDocument *document_;
+    Qt::Corner corner_;
     QPointF position_;
     AbsoluteBlock *parent_;
-
 };
 
 #endif // ABSOLUTEBLOCK_H

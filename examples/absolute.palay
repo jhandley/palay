@@ -30,19 +30,19 @@ for i = 1, getPageCount() do
     local pageTop = (i - 1) * getPageHeight()
     local pageBottom = pageTop + getPageHeight()
 
-    startBlock(0, pageTop)
+    startBlock("TopLeft", 0, pageTop)
     text("top left")
     endBlock()
 
-    startBlock(getPageWidth()-75, pageTop)
-    text("top right and a bunch of other stuff to make this kinda long")
+    startBlock("TopRight", getPageWidth(), pageTop)
+    text("top right")
     endBlock()
 
-    startBlock(0, pageBottom-25)
+    startBlock("BottomLeft", 0, pageBottom)
     text("bottom left")
     endBlock()
 
-    startBlock(getPageWidth()-75, pageBottom-25)
+    startBlock("BottomRight", getPageWidth(), pageBottom)
     text("bottom right")
     endBlock()
 end

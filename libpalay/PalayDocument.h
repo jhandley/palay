@@ -75,6 +75,7 @@ private:
     bool setBorderStyle(QTextTableFormat &format, int style);
     QColor getColor(lua_State *L, int index);
     Qt::Alignment getAlignment(lua_State *L, int index);
+    Qt::Corner getCorner(lua_State *L, int index);
     void setPageSize(QPrinter::PaperSize size);
     void setPageMargins(float left, float top, float right, float bottom);
 
