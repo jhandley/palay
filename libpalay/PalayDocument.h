@@ -34,6 +34,7 @@ public:
     int pageSize(lua_State *L);
     int getPageWidth(lua_State *L);
     int getPageHeight(lua_State *L);
+    int getPageCount(lua_State *L);
 
     int startBlock(lua_State *L);
     int endBlock(lua_State *L);
@@ -76,7 +77,7 @@ private:
     void setPageSize(QPrinter::PaperSize size);
 
     void print();
-    void drawAbsoluteBlocks(QPainter *painter, int pageNumber);
+    void drawAbsoluteBlocks(QPainter *painter, const QRectF &view);
 
     QTextDocument *doc_;
     QStack<QTextCursor> cursorStack_;

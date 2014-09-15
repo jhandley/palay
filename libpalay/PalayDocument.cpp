@@ -322,10 +322,16 @@ int PalayDocument::getPageHeight(lua_State *L)
     return 1;
 }
 
+int PalayDocument::getPageCount(lua_State *L)
+{
+    lua_pushinteger(L, doc_->pageCount());
+    return 1;
+}
+
 int PalayDocument::startBlock(lua_State *L)
 {
-    float x = luaL_checkinteger(L, 2);
-    float y = luaL_checkinteger(L, 3);
+    float x = pointsToDotsX(luaL_checkinteger(L, 2));
+    float y = pointsToDotsY(luaL_checkinteger(L, 3));
     AbsoluteBlock *block = new AbsoluteBlock(QPointF(x,y), this);
     absoluteBlocks_ << block;
     QTextCursor blockCursor(block->document());
@@ -340,7 +346,6 @@ int PalayDocument::endBlock(lua_State *L)
 {
     if (cursorStack_.top().document() == doc_)
         luaL_error(L, "endBlock called with no matching call to startBlock()");
-
 
     cursorStack_.pop();
     return 0;
@@ -451,23 +456,22 @@ void PalayDocument::print()
     const qreal dpiScaleY = qreal(printer_.logicalDpiY()) / qt_defaultDpiY();
     painter.scale(dpiScaleX, dpiScaleY);
 
-    QRect body = QRect(QPoint(0, 0), QSize(doc_->pageSize().width(), doc_->pageSize().height()));
-    //int totalPages = doc_->pageCount();
+    qreal pageWidth = doc_->pageSize().width();
+    qreal pageHeight = doc_->pageSize().height();
     QAbstractTextDocumentLayout *layout = doc_->documentLayout();
 
     for (int pageNumber = 1; pageNumber <= doc_->pageCount(); ++pageNumber) {
 
         painter.save();
-        painter.translate(body.left(), body.top() - (pageNumber - 1) * body.height());
-        QRect view(0, (pageNumber - 1) * body.height(), body.width(), body.height());
+        QRect view(0, (pageNumber - 1) * pageHeight, pageWidth, pageHeight);
+        painter.translate(0, -view.top());
         QAbstractTextDocumentLayout::PaintContext ctx;
         painter.setClipRect(view);
         ctx.clip = view;
 
         layout->draw(&painter, ctx);
 
-        painter.translate(0, view.top());
-        drawAbsoluteBlocks(&painter, pageNumber);
+        drawAbsoluteBlocks(&painter, view);
 
         painter.restore();
         if (pageNumber != doc_->pageCount())
@@ -476,13 +480,11 @@ void PalayDocument::print()
     painter.end();
 }
 
-void PalayDocument::drawAbsoluteBlocks(QPainter *painter, int pageNumber)
+void PalayDocument::drawAbsoluteBlocks(QPainter *painter, const QRectF &view)
 {
-    QRectF pageBounds(0, 0, doc_->pageSize().width(), doc_->pageSize().height() * (pageNumber - 1));
-
     foreach (AbsoluteBlock *block, absoluteBlocks_) {
         QRectF blockBounds = block->bounds();
-        if (pageBounds.intersects(blockBounds)) {
+        if (view.intersects(blockBounds)) {
             block->draw(painter);
         }
     }

@@ -1,20 +1,48 @@
+style({font_size = 12})
 
 for i = 1, 5 do
-  paragraph("la ddeesd;lfjslj pos dfois jfoisjdoifhsoifj sopdj fosidh foish foisdh foisdposi f[pwoi f-p0wif peowjfpoje deadaosdjoa dpaos djpoas dpoas dpo asoihjsdfiohwaif8hwoiwoif hwiouefh 09u309hfsoiadj")
+    paragraph([[Collaboratively administrate empowered markets via plug-and-play networks. Dynamically procrastinate B2C users after installed base benefits. Dramatically visualize customer directed convergence without revolutionary ROI.
+
+    Efficiently unleash cross-media information without cross-media value. Quickly maximize timely deliverables for real-time schemas. Dramatically maintain clicks-and-mortar solutions without functional solutions.
+
+    Completely synergize resource sucking relationships via premier niche markets. Professionally cultivate one-to-one customer service with robust ideas. Dynamically innovate resource-leveling customer service for state of the art customer service.
+
+    Objectively innovate empowered manufactured products whereas parallel platforms. Holisticly predominate extensible testing procedures for reliable supply chains. Dramatically engage top-line web services vis-a-vis cutting-edge deliverables.
+
+    Proactively envisioned multimedia based expertise and cross-media growth strategies. Seamlessly visualize quality intellectual capital without superior collaboration and idea-sharing. Holistically pontificate installed base portals after maintainable products.
+
+    Phosfluorescently engage worldwide methodologies with web-enabled technology. Interactively coordinate proactive e-commerce via process-centric "outside the box" thinking. Completely pursue scalable customer service through sustainable potentialities.
+
+    Collaboratively administrate turnkey channels whereas virtual e-tailers. Objectively seize scalable metrics whereas proactive e-services. Seamlessly empower fully researched growth strategies and interoperable internal or "organic" sources.
+
+    Credibly innovate granular internal or "organic" sources whereas high standards in web-readiness. Energistically scale future-proof core competencies vis-a-vis impactful experiences. Dramatically synthesize integrated schemas with optimal networks.
+
+    Interactively procrastinate high-payoff content without backward-compatible data. Quickly cultivate optimal processes and tactical architectures. Completely iterate covalent strategic theme areas via accurate e-markets.
+
+    Globally incubate standards compliant channels before scalable benefits. Quickly disseminate superior deliverables whereas web-enabled applications. Quickly drive clicks-and-mortar catalysts for change before vertical architectures
+    ]])
 end
 
-startBlock(0, 0)
-text("top left")
-endBlock()
+style({font_size = 10, text_background_color = "grey"})
 
-startBlock(getPageWidth()-100, 0)
-text("top right")
-endBlock()
+for i = 1, getPageCount() do
 
-startBlock(0, getPageHeight() -100)
-text("bottom left")
-endBlock()
+    local pageTop = (i - 1) * getPageHeight()
+    local pageBottom = pageTop + getPageHeight()
 
-startBlock(getPageWidth()-100, getPageHeight() -100)
-text("bottom right")
-endBlock()
+    startBlock(0, pageTop)
+    text("top left")
+    endBlock()
+
+    startBlock(getPageWidth()-60, pageTop)
+    text("top right")
+    endBlock()
+
+    startBlock(0, pageBottom-25)
+    text("bottom left")
+    endBlock()
+
+    startBlock(getPageWidth()-60, pageBottom-25)
+    text("bottom right")
+    endBlock()
+end

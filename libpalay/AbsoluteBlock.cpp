@@ -1,6 +1,3 @@
-// Copyright (c) 2011-2014 LKC Technologies, Inc.  All rights reserved.
-// LKC Technologies, Inc. PROPRIETARY AND CONFIDENTIAL
-
 #include "AbsoluteBlock.h"
 #include <QAbstractTextDocumentLayout>
 #include <QPainter>
@@ -24,9 +21,11 @@ QRectF AbsoluteBlock::bounds()
 
 void AbsoluteBlock::draw(QPainter *painter)
 {
-    document_->documentLayout()->setPaintDevice(painter->device()); // make sure we are on same DPI as printer
+    QAbstractTextDocumentLayout *layout = document_->documentLayout();
     painter->save();
-    painter->translate(position_);
-    document_->drawContents(painter);
+    painter->translate(QPointF(position_.x(), position_.y()));
+    QAbstractTextDocumentLayout::PaintContext ctx;
+    ctx.clip = painter->clipBoundingRect();
+    layout->draw(painter, ctx);
     painter->restore();
 }
