@@ -14,7 +14,10 @@ class AbsoluteBlock : public QObject
 {
     Q_OBJECT
 public:
-    explicit AbsoluteBlock(QObject *parent = 0);
+
+    explicit AbsoluteBlock(const QPointF& pos, QObject *parent = 0);
+
+    QTextDocument *document();
 
     QRectF bounds();
 
@@ -26,7 +29,7 @@ public slots:
 
 private:
 
-    QTextDocument *content_;
+    QTextDocument *document_;
     QPointF position_;
     AbsoluteBlock *parent_;
 

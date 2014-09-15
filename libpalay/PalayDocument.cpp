@@ -240,7 +240,7 @@ int PalayDocument::cell(lua_State *L)
 int PalayDocument::endTable(lua_State *L)
 {
     if (!cursorStack_.top().currentTable())
-        luaL_error(L, "endTable called with no matching call to table()");
+        luaL_error(L, "endTable called with no matching call to startTable()");
 
     cursorStack_.pop();
     // Saved cursor is in the parent frame of table so moving to last position
@@ -320,6 +320,30 @@ int PalayDocument::getPageHeight(lua_State *L)
 {
     lua_pushnumber(L, printer_.pageRect(QPrinter::Point).height());
     return 1;
+}
+
+int PalayDocument::startBlock(lua_State *L)
+{
+    float x = luaL_checkinteger(L, 2);
+    float y = luaL_checkinteger(L, 3);
+    AbsoluteBlock *block = new AbsoluteBlock(QPointF(x,y), this);
+    absoluteBlocks_ << block;
+    QTextCursor blockCursor(block->document());
+    blockCursor.setBlockFormat(blockFormat_);
+    blockCursor.setCharFormat(charFormat_);
+    cursorStack_.push(blockCursor);
+
+    return 0;
+}
+
+int PalayDocument::endBlock(lua_State *L)
+{
+    if (cursorStack_.top().document() == doc_)
+        luaL_error(L, "endBlock called with no matching call to startBlock()");
+
+
+    cursorStack_.pop();
+    return 0;
 }
 
 bool PalayDocument::setFontStyle(QTextCharFormat &format, int style)

@@ -111,6 +111,18 @@ static int pageBreak(lua_State *L)
     return doc->pageBreak(L);
 }
 
+static int startBlock(lua_State *L)
+{
+    PalayDocument *doc = checkDocument(L, 1);
+    return doc->startBlock(L);
+}
+
+static int endBlock(lua_State *L)
+{
+    PalayDocument *doc = checkDocument(L, 1);
+    return doc->endBlock(L);
+}
+
 static int gc(lua_State *L)
 {
     PalayDocument *doc = checkDocument(L, 1);
@@ -137,6 +149,8 @@ static const struct luaL_Reg palaydoc_methods[] = {
     {"getPageHeight", getPageHeight},
     {"pageSize", pageSize},
     {"pageBreak", pageBreak},
+    {"startBlock", startBlock},
+    {"endBlock", endBlock},
     {"__gc", gc},
     {NULL, NULL}
 };

@@ -1,0 +1,20 @@
+
+for i = 1, 5 do
+  paragraph("la ddeesd;lfjslj pos dfois jfoisjdoifhsoifj sopdj fosidh foish foisdh foisdposi f[pwoi f-p0wif peowjfpoje deadaosdjoa dpaos djpoas dpoas dpo asoihjsdfiohwaif8hwoiwoif hwiouefh 09u309hfsoiadj")
+end
+
+startBlock(0, 0)
+text("top left")
+endBlock()
+
+startBlock(getPageWidth()-100, 0)
+text("top right")
+endBlock()
+
+startBlock(0, getPageHeight() -100)
+text("bottom left")
+endBlock()
+
+startBlock(getPageWidth()-100, getPageHeight() -100)
+text("bottom right")
+endBlock()

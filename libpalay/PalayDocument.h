@@ -35,6 +35,9 @@ public:
     int getPageWidth(lua_State *L);
     int getPageHeight(lua_State *L);
 
+    int startBlock(lua_State *L);
+    int endBlock(lua_State *L);
+
     enum FontStyle {
         Normal = 0,
         Bold = 1,
