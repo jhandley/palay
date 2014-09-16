@@ -152,11 +152,16 @@ int PalayDocument::style(lua_State *L)
         } else if (qstricmp(key, "font_style") == 0) {
             setFontStyle(L, formatStack_.top().char_, -1);
         } else if (qstricmp(key, "border_width") == 0) {
-            if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) <= 0)
+            if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) < 0)
                 luaL_error(L, "Invalid value for border_width. Must be a positive number.");
             qreal border = pointsToDotsX(lua_tonumber(L, -1));
             formatStack_.top().table_.setBorder(border);
             formatStack_.top().frame_.setBorder(border);
+        } else if (qstricmp(key, "cell_padding") == 0) {
+            if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) < 0)
+                luaL_error(L, "Invalid value for cell_padding. Must be a positive number.");
+            qreal padding = pointsToDotsX(lua_tonumber(L, -1));
+            formatStack_.top().table_.setCellPadding(padding);
         } else if (qstricmp(key, "border_style") == 0) {
             QTextFrameFormat::BorderStyle borderStyle = getBorderStyle(L, -1);
             formatStack_.top().table_.setBorderStyle(borderStyle);
