@@ -1,4 +1,4 @@
-# palay [![Build Status](https://travis-ci.org/lkc/palay.svg)](https://travis-ci.org/lkc/palay)
+# palay [![Build Status](https://travis-ci.org/jhandley/palay.svg)](https://travis-ci.org/jhandley/palay)
 
 Lightweight page layout with Lua
 
