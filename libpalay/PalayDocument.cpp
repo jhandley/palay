@@ -217,6 +217,26 @@ int PalayDocument::style(lua_State *L)
                 formatStack_.top().table_.setHeight(heightDots);
                 formatStack_.top().frame_.setHeight(heightDots);
             }
+        } else if (qstricmp(key, "indent") == 0) {
+           if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) < 0)
+               luaL_error(L, "Invalid value for indent. Must be a positive number.");
+           formatStack_.top().block_.setIndent(lua_tointeger(L, -1));
+        } else if (qstricmp(key, "left_margin") == 0) {
+           if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) < 0)
+               luaL_error(L, "Invalid value for left_margin. Must be a positive number.");
+           formatStack_.top().block_.setLeftMargin(pointsToDotsX(lua_tonumber(L, -1)));
+        } else if (qstricmp(key, "right_margin") == 0) {
+           if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) < 0)
+               luaL_error(L, "Invalid value for right_margin. Must be a positive number.");
+           formatStack_.top().block_.setRightMargin(pointsToDotsX(lua_tonumber(L, -1)));
+        } else if (qstricmp(key, "top_margin") == 0) {
+           if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) < 0)
+               luaL_error(L, "Invalid value for top_margin. Must be a positive number.");
+           formatStack_.top().block_.setTopMargin(pointsToDotsY(lua_tonumber(L, -1)));
+        } else if (qstricmp(key, "bottom_margin") == 0) {
+           if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) < 0)
+               luaL_error(L, "Invalid value for bottom_margin. Must be a positive number.");
+           formatStack_.top().block_.setBottomMargin(pointsToDotsY(lua_tonumber(L, -1)));
         } else {
             luaL_error(L, "Invalid key in style table: %s", key);
         }
