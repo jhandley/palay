@@ -1,12 +1,12 @@
 
-style({font_family = "Helvetica", font_size=14, font_style=Bold})
+style({font_family = "Helvetica", font_size=14, font_style="Bold"})
 paragraph("Table Examples")
 
 local leftMargin, topMargin, rightMargin, bottomMargin = getPageMargins()
 
-style({font_size=9, font_style=Normal})
+style({font_size=9, font_style="Normal"})
 
-style({border_style=Solid, border_width=1})
+style({border_style="Solid", border_width=1})
 
 paragraph("")
 paragraph("Simple")

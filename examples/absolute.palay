@@ -46,7 +46,7 @@ for i = 1, getPageCount() do
     text("bottom right")
     endBlock()
 
-    pushStyle({width = getPageWidth(), alignment = HCenter})
+    pushStyle({width = getPageWidth(), alignment = "HCenter"})
     startBlock("TopLeft", 0, pageTop)
     text("top center")
     endBlock()

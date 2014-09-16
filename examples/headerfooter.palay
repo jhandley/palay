@@ -23,8 +23,8 @@ for i = 1, 3 do
     ]])
 end
 
-style({alignment = HCenter, font_style = Italic})
+style({alignment = "HCenter", font_style = "Italic"})
 header("Palay Header Example")
 
-style({alignment = Right})
+style({alignment = "Right"})
 footer(function (page, pages) return string.format("Page %s of %s", page, pages) end)

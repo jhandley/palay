@@ -48,6 +48,8 @@ namespace {
         return dots * 72.f/qt_defaultDpiY();
     }
 
+    QRegExp whitespaceOrComma("(\\s*,\\s*)|\\s+");
+
 }
 PalayDocument::PalayDocument(QObject *parent) :
     QObject(parent),
@@ -137,55 +139,54 @@ int PalayDocument::style(lua_State *L)
         if (!lua_isstring(L, -2))
             luaL_error(L, "Invalid key in style table. All style keys must be strings.");
         const char *key = lua_tostring(L, -2);
-        if (strcmp(key, "font_family") == 0) {
+        if (qstricmp(key, "font_family") == 0) {
             if (!lua_isstring(L, -1))
                 luaL_error(L, "Invalid value for font_family. Must be a string.");
             formatStack_.top().char_.setFontFamily(lua_tostring(L, -1));
-        } else if (strcmp(key, "font_size") == 0) {
+        } else if (qstricmp(key, "font_size") == 0) {
             if (!lua_isnumber(L, -1) || lua_tointeger(L, -1) <= 0)
                 luaL_error(L, "Invalid value for font_size. Must be a positive number.");
             // Note that QTextDocument takes font size in points, not dots
             // even though other measurements are in dots.
             formatStack_.top().char_.setFontPointSize(lua_tointeger(L, -1));
-        } else if (strcmp(key, "font_style") == 0) {
-            if (!lua_isnumber(L, -1) || !setFontStyle(formatStack_.top().char_, lua_tointeger(L, -1)))
-                luaL_error(L, "Invalid value for font_style.");
-        } else if (strcmp(key, "border_width") == 0) {
+        } else if (qstricmp(key, "font_style") == 0) {
+            setFontStyle(L, formatStack_.top().char_, -1);
+        } else if (qstricmp(key, "border_width") == 0) {
             if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) <= 0)
                 luaL_error(L, "Invalid value for border_width. Must be a positive number.");
             qreal border = pointsToDotsX(lua_tonumber(L, -1));
             formatStack_.top().table_.setBorder(border);
             formatStack_.top().frame_.setBorder(border);
-        } else if (strcmp(key, "border_style") == 0) {
+        } else if (qstricmp(key, "border_style") == 0) {
             QTextFrameFormat::BorderStyle borderStyle = getBorderStyle(L, -1);
             formatStack_.top().table_.setBorderStyle(borderStyle);
             formatStack_.top().frame_.setBorderStyle(borderStyle);
-        } else if (strcmp(key, "border_color") == 0) {
+        } else if (qstricmp(key, "border_color") == 0) {
             QColor color = getColor(L, -1);
             if (!color.isValid())
                 luaL_error(L, "Invalid color for text_color.");
             formatStack_.top().table_.setBorderBrush(QBrush(color));
             formatStack_.top().frame_.setBorderBrush(QBrush(color));
-        } else if (strcmp(key, "text_color") == 0) {
+        } else if (qstricmp(key, "text_color") == 0) {
             QColor color = getColor(L, -1);
             if (!color.isValid())
                 luaL_error(L, "Invalid color for text_color.");
             formatStack_.top().char_.setForeground(QBrush(color));
-        } else if (strcmp(key, "text_background_color") == 0) {
+        } else if (qstricmp(key, "text_background_color") == 0) {
             QColor color = getColor(L, -1);
             if (!color.isValid())
                 luaL_error(L, "Invalid color for background_color.");
             formatStack_.top().char_.setBackground(QBrush(color));
-        } else if (strcmp(key, "background_color") == 0) {
+        } else if (qstricmp(key, "background_color") == 0) {
             QColor color = getColor(L, -1);
             if (!color.isValid())
                 luaL_error(L, "Invalid color for background_color.");
             formatStack_.top().block_.setBackground(QBrush(color));
-        } else if (strcmp(key, "alignment") == 0) {
+        } else if (qstricmp(key, "alignment") == 0) {
             Qt::Alignment align = getAlignment(L, -1);
             formatStack_.top().block_.setAlignment(align);
             formatStack_.top().table_.setAlignment(align);
-        } else if (strcmp(key, "width") == 0) {
+        } else if (qstricmp(key, "width") == 0) {
             if (!lua_isnumber(L, -1) || (lua_tonumber(L, -1) <= 0 && lua_tonumber(L, -1) != -1))
                 luaL_error(L, "Invalid value for width. Must be a positive number or -1 for variable.");
             qreal widthPoints = lua_tonumber(L, -1);
@@ -198,7 +199,7 @@ int PalayDocument::style(lua_State *L)
                 formatStack_.top().table_.setWidth(widthDots);
                 formatStack_.top().frame_.setWidth(widthDots);
             }
-         } else if (strcmp(key, "height") == 0) {
+         } else if (qstricmp(key, "height") == 0) {
             if (!lua_isnumber(L, -1) || (lua_tonumber(L, -1) <= 0 && lua_tonumber(L, -1) != -1))
                 luaL_error(L, "Invalid value for height. Must be a positive number or -1 for variable.");
             qreal heightPoints = lua_tonumber(L, -1);
@@ -582,35 +583,41 @@ int PalayDocument::endBlock(lua_State *L)
     return 0;
 }
 
-bool PalayDocument::setFontStyle(QTextCharFormat &format, int style)
+void PalayDocument::setFontStyle(lua_State *L, QTextCharFormat &format, int index)
 {
-    if (style < 0 || style > (Bold + Italic + Underline))
-        return false;
-    format.setFontWeight(style & Bold ? QFont::Bold : QFont::Normal);
-    format.setFontItalic(style & Italic);
-    format.setFontUnderline(style & Underline);
-    return true;
+    QString styleString = luaL_checkstring(L, index);
+    QStringList styles = QString(styleString).split(whitespaceOrComma);
+    if (styles.isEmpty())
+        luaL_error(L, "\"%s\" is not a valid font style. Try a comma or space seperated list of values like: \"Bold,Italic\" or \"Bold Underline\"", qPrintable(styleString));
+    format.setFontWeight(QFont::Normal);
+    format.setFontItalic(false);
+    format.setFontUnderline(false);
+    foreach (QString s, styles) {
+        if (s.compare("Bold", Qt::CaseInsensitive) == 0)
+            format.setFontWeight(QFont::Bold);
+        else if (s.compare("Italic", Qt::CaseInsensitive) == 0)
+            format.setFontItalic(true);
+        else if (s.compare("Underline", Qt::CaseInsensitive) == 0)
+            format.setFontUnderline(true);
+        else if (s.compare("Normal", Qt::CaseInsensitive) != 0) {
+            luaL_error(L, "\"%s\" is not a valid font style. Try \"Normal\", \"Bold\", \"Italic\", \"Underline\" or a combination thereof.", qPrintable(s));
+        }
+    }
 }
 
 QTextFrameFormat::BorderStyle PalayDocument::getBorderStyle(lua_State *L, int index)
 {
-    int style = luaL_checkinteger(L, index);
-    switch (style) {
-    case None:
+    const char* style = luaL_checkstring(L, index);
+    if (qstricmp(style, "None") == 0)
         return QTextFrameFormat::BorderStyle_None;
-        break;
-    case Dotted:
+    else if (qstricmp(style, "Dotted") == 0)
         return QTextFrameFormat::BorderStyle_Dotted;
-        break;
-    case Dashed:
+    else if (qstricmp(style, "Dashed") == 0)
         return QTextFrameFormat::BorderStyle_Dashed;
-        break;
-    case Solid:
+    else if (qstricmp(style, "Solid") == 0)
         return QTextFrameFormat::BorderStyle_Solid;
-        break;
-    default:
+    else
         return (QTextFrameFormat::BorderStyle) luaL_error(L, "Invalid value for border_style.");
-    }
 }
 
 QColor PalayDocument::getColor(lua_State *L, int index)
@@ -650,33 +657,43 @@ QColor PalayDocument::getColor(lua_State *L, int index)
 
 Qt::Alignment PalayDocument::getAlignment(lua_State *L, int index)
 {
-    int alignment = luaL_checkinteger(L, index);
+    QString alignment = luaL_checkstring(L, index);
+    QStringList alignments = QString(alignment).split(whitespaceOrComma);
+    if (alignment.isEmpty())
+        luaL_error(L, "\"%s\" is not a valid alignment. Try a comma or space seperated list of values like: \"Top Left\" or \"Top,HCenter\"", qPrintable(alignment));
     Qt::Alignment result = 0;
-    if (alignment & Left)
-        result |= Qt::AlignLeft;
-    if (alignment & Right)
-        result |= Qt::AlignRight;
-    if (alignment & HCenter)
-        result |= Qt::AlignHCenter;
-    if (alignment & Top)
-        result |= Qt::AlignTop;
-    if (alignment & Bottom)
-        result |= Qt::AlignBottom;
-    if (alignment & VCenter)
-        result |= Qt::AlignVCenter;
+    foreach (QString a, alignments) {
+        if (a.compare("Left", Qt::CaseInsensitive) == 0)
+            result |= Qt::AlignLeft;
+        else if (a.compare("Right", Qt::CaseInsensitive) == 0)
+            result |= Qt::AlignRight;
+        else if (a.compare("HCenter", Qt::CaseInsensitive) == 0)
+            result |= Qt::AlignHCenter;
+        else if (a.compare("Top", Qt::CaseInsensitive) == 0)
+            result |= Qt::AlignTop;
+        else if (a.compare("Bottom", Qt::CaseInsensitive) == 0)
+            result |= Qt::AlignBottom;
+        else if (a.compare("VCenter", Qt::CaseInsensitive) == 0)
+            result |= Qt::AlignVCenter;
+        else if (a.compare("Right", Qt::CaseInsensitive) == 0)
+            result |= Qt::AlignRight;
+        else
+            luaL_error(L, "\"%s\" is not a value for alignment. Try \"Left\", \"Right\", \"HCenter\", \"Top\", \"Bottom\" or ", qPrintable(a));
+    }
+
     return result;
 }
 
 Qt::Corner PalayDocument::getCorner(lua_State *L, int index)
 {
-    QString cornerString = QString(luaL_checkstring(L, index)).toUpper();
-    if (cornerString == "TOPLEFT")
+    const char *cornerString = luaL_checkstring(L, index);
+    if (qstricmp(cornerString, "TopLeft") == 0)
         return Qt::TopLeftCorner;
-    else if (cornerString == "TOPRIGHT")
+    else if (qstricmp(cornerString, "TopRight") == 0)
         return Qt::TopRightCorner;
-    else if (cornerString == "BOTTOMLEFT")
+    else if (qstricmp(cornerString, "BottomLeft") == 0)
         return Qt::BottomLeftCorner;
-    else if (cornerString == "BOTTOMRIGHT")
+    else if (qstricmp(cornerString, "BottomRight") == 0)
         return Qt::BottomRightCorner;
     else
         return (Qt::Corner) luaL_error(L, "%s is not a valid corner. Try \"TopLeft\", \"TopRight\", \"BottomLeft\" or \"BottomRight\"", qPrintable(cornerString));

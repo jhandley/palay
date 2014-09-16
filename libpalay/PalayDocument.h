@@ -43,38 +43,13 @@ public:
     int startBlock(lua_State *L);
     int endBlock(lua_State *L);
 
-    enum FontStyle {
-        Normal = 0,
-        Bold = 1,
-        Italic = 2,
-        Underline = 4
-    };
-
-    enum BorderStyle {
-        None = 0,
-        Dotted = 1,
-        Dashed = 2,
-        Solid = 3
-    };
-
-    enum Alignment {
-        Left = 1,
-        Right = 2,
-        HCenter = 4,
-        Justify = 8,
-        Top = 16,
-        Bottom = 32,
-        VCenter = 64,
-        Center = 128
-    };
-
 signals:
 
 public slots:
 
 private:
 
-    bool setFontStyle(QTextCharFormat &format, int style);
+    void setFontStyle(lua_State *L, QTextCharFormat &format, int index);
     QTextFrameFormat::BorderStyle getBorderStyle(lua_State *L, int index);
     QColor getColor(lua_State *L, int index);
     Qt::Alignment getAlignment(lua_State *L, int index);

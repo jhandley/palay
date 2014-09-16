@@ -213,39 +213,6 @@ extern "C" {
         luaL_setfuncs(L, palaydoc_methods, 0);
         luaL_newlib(L, palaylib_functions);
 
-        lua_pushinteger(L, (int) PalayDocument::Normal);
-        lua_setfield(L, -2, "Normal");
-        lua_pushinteger(L, (int) PalayDocument::Bold);
-        lua_setfield(L, -2, "Bold");
-        lua_pushinteger(L, (int) PalayDocument::Italic);
-        lua_setfield(L, -2, "Italic");
-        lua_pushinteger(L, (int) PalayDocument::Underline);
-        lua_setfield(L, -2, "Underline");
-
-        lua_pushinteger(L, (int) PalayDocument::None);
-        lua_setfield(L, -2, "None");
-        lua_pushinteger(L, (int) PalayDocument::Dashed);
-        lua_setfield(L, -2, "Dashed");
-        lua_pushinteger(L, (int) PalayDocument::Dotted);
-        lua_setfield(L, -2, "Dotted");
-        lua_pushinteger(L, (int) PalayDocument::Solid);
-        lua_setfield(L, -2, "Solid");
-
-        lua_pushinteger(L, (int) PalayDocument::Left);
-        lua_setfield(L, -2, "Left");
-        lua_pushinteger(L, (int) PalayDocument::Right);
-        lua_setfield(L, -2, "Right");
-        lua_pushinteger(L, (int) PalayDocument::HCenter);
-        lua_setfield(L, -2, "HCenter");
-        lua_pushinteger(L, (int) PalayDocument::Top);
-        lua_setfield(L, -2, "Top");
-        lua_pushinteger(L, (int) PalayDocument::Bottom);
-        lua_setfield(L, -2, "Bottom");
-        lua_pushinteger(L, (int) PalayDocument::VCenter);
-        lua_setfield(L, -2, "VCenter");
-        lua_pushinteger(L, (int) PalayDocument::Center);
-        lua_setfield(L, -2, "Center");
-
         return 1;
     }
 }
