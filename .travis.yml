@@ -1,0 +1,18 @@
+language: c
+
+#branches:
+#    only:
+#        - master
+env:
+     - QT5PKG= RUN_QT5=
+     - QT5PKG="qt5-qmake qtbase5-dev" RUN_QT5=-qt=qt5
+
+before_install:
+     - sudo add-apt-repository --yes ppa:ubuntu-sdk-team/ppa
+     - sudo apt-get update -qq
+     - sudo apt-get install -qq liblua5.2-dev $QT5PKG
+
+script:
+    - qmake $RUN_QT5 -v
+    - qmake $RUN_QT5 palay.pro
+    - make

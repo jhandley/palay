@@ -328,7 +328,7 @@ int PalayDocument::image(lua_State *L)
     } else if (!im.load(name))
         luaL_error(L, "Failed to load image from file %s", qPrintable(name));
 
-    QString imageResourceName = QString::number(im.serialNumber());
+    QString imageResourceName = QString::number(im.cacheKey());
     doc_->addResource(QTextDocument::ImageResource, QUrl(imageResourceName), im);
 
     QTextImageFormat imageFormat;
@@ -351,15 +351,167 @@ int PalayDocument::html(lua_State *L)
     return 0;
 }
 
+struct PageSizeLookup {
+    const char *name;
+    QPrinter::PageSize value;
+};
+
+#define NUM_ELEMENTS(x) (sizeof(x)/sizeof((x)[0]))
+static const PageSizeLookup nameToPageSize[] =
+{
+    #define STR(x)   #x
+    #define XSTR(x)  STR(x)
+    #define ENTRY(name) { XSTR(name), QPrinter::name }
+
+    ENTRY(A4),
+    ENTRY(B5),
+    ENTRY(Letter),
+    ENTRY(Legal),
+    ENTRY(Executive),
+    ENTRY(A0),
+    ENTRY(A1),
+    ENTRY(A2),
+    ENTRY(A3),
+    ENTRY(A5),
+    ENTRY(A6),
+    ENTRY(A7),
+    ENTRY(A8),
+    ENTRY(A9),
+    ENTRY(B0),
+    ENTRY(B1),
+    ENTRY(B10),
+    ENTRY(B2),
+    ENTRY(B3),
+    ENTRY(B4),
+    ENTRY(B6),
+    ENTRY(B7),
+    ENTRY(B8),
+    ENTRY(B9),
+    ENTRY(C5E),
+    ENTRY(Comm10E),
+    ENTRY(DLE),
+    ENTRY(Folio),
+    ENTRY(Ledger),
+    ENTRY(Tabloid),
+
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 3, 0))
+    // New values derived from PPD standard
+    ENTRY(A10),
+    ENTRY(A3Extra),
+    ENTRY(A4Extra),
+    ENTRY(A4Plus),
+    ENTRY(A4Small),
+    ENTRY(A5Extra),
+    ENTRY(B5Extra),
+
+    ENTRY(JisB0),
+    ENTRY(JisB1),
+    ENTRY(JisB2),
+    ENTRY(JisB3),
+    ENTRY(JisB4),
+    ENTRY(JisB5),
+    ENTRY(JisB6),
+    ENTRY(JisB7),
+    ENTRY(JisB8),
+    ENTRY(JisB9),
+    ENTRY(JisB10),
+
+    ENTRY(AnsiA),
+    ENTRY(AnsiB),
+    ENTRY(AnsiC),
+    ENTRY(AnsiD),
+    ENTRY(AnsiE),
+    ENTRY(LegalExtra),
+    ENTRY(LetterExtra),
+    ENTRY(LetterPlus),
+    ENTRY(LetterSmall),
+    ENTRY(TabloidExtra),
+
+    ENTRY(ArchA),
+    ENTRY(ArchB),
+    ENTRY(ArchC),
+    ENTRY(ArchD),
+    ENTRY(ArchE),
+
+    ENTRY(Imperial7x9),
+    ENTRY(Imperial8x10),
+    ENTRY(Imperial9x11),
+    ENTRY(Imperial9x12),
+    ENTRY(Imperial10x11),
+    ENTRY(Imperial10x13),
+    ENTRY(Imperial10x14),
+    ENTRY(Imperial12x11),
+    ENTRY(Imperial15x11),
+
+    ENTRY(ExecutiveStandard),
+    ENTRY(Note),
+    ENTRY(Quarto),
+    ENTRY(Statement),
+    ENTRY(SuperA),
+    ENTRY(SuperB),
+    ENTRY(Postcard),
+    ENTRY(DoublePostcard),
+    ENTRY(Prc16K),
+    ENTRY(Prc32K),
+    ENTRY(Prc32KBig),
+
+    ENTRY(FanFoldUS),
+    ENTRY(FanFoldGerman),
+    ENTRY(FanFoldGermanLegal),
+
+    ENTRY(EnvelopeB4),
+    ENTRY(EnvelopeB5),
+    ENTRY(EnvelopeB6),
+    ENTRY(EnvelopeC0),
+    ENTRY(EnvelopeC1),
+    ENTRY(EnvelopeC2),
+    ENTRY(EnvelopeC3),
+    ENTRY(EnvelopeC4),
+    ENTRY(EnvelopeC5),
+    ENTRY(EnvelopeC6),
+    ENTRY(EnvelopeC65),
+    ENTRY(EnvelopeC7),
+    ENTRY(EnvelopeDL),
+
+    ENTRY(Envelope9),
+    ENTRY(Envelope10),
+    ENTRY(Envelope11),
+    ENTRY(Envelope12),
+    ENTRY(Envelope14),
+    ENTRY(EnvelopeMonarch),
+    ENTRY(EnvelopePersonal),
+
+    ENTRY(EnvelopeChou3),
+    ENTRY(EnvelopeChou4),
+    ENTRY(EnvelopeInvite),
+    ENTRY(EnvelopeItalian),
+    ENTRY(EnvelopeKaku2),
+    ENTRY(EnvelopeKaku3),
+    ENTRY(EnvelopePrc1),
+    ENTRY(EnvelopePrc2),
+    ENTRY(EnvelopePrc3),
+    ENTRY(EnvelopePrc4),
+    ENTRY(EnvelopePrc5),
+    ENTRY(EnvelopePrc6),
+    ENTRY(EnvelopePrc7),
+    ENTRY(EnvelopePrc8),
+    ENTRY(EnvelopePrc9),
+    ENTRY(EnvelopePrc10),
+    ENTRY(EnvelopeYou4)
+#endif
+};
+
 int PalayDocument::pageSize(lua_State *L)
 {
-    QString sizeString = QString(luaL_checkstring(L, 2)).toUpper();
-    QPrinter::PaperSize size;
-    if (sizeString == "A4")
-        size = QPrinter::A4;
-    else if (sizeString == "LETTER")
-        size = QPrinter::Letter;
-    else
+    const char * sizeString = luaL_checkstring(L, 2);
+    QPrinter::PaperSize size = (QPrinter::PaperSize) (QPrinter::NPageSize + 1);
+    for (size_t i = 0; i < NUM_ELEMENTS(nameToPageSize); i++) {
+        if (qstricmp(sizeString, nameToPageSize[i].name) == 0) {
+            size = nameToPageSize[i].value;
+            break;
+        }
+    }
+    if (size > QPrinter::NPageSize)
         luaL_error(L, "\"%s\" is not a valid page size. Try \"Letter\" or \"A4\".", qPrintable(sizeString));
 
     setPageSize(size);
