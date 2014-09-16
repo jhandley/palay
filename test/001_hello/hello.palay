@@ -1,0 +1,5 @@
+--
+-- palay -o hello.pdf hello.palay
+--
+
+paragraph("Hello Palay!")

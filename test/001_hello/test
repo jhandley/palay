@@ -1,0 +1,5 @@
+# Run one of the most basic tests of palay to make
+# sure that it works.
+$PALAY -o actual.pdf hello.palay
+$COMPAREPDF expected.pdf actual.pdf
+

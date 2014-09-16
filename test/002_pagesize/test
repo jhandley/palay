@@ -1,0 +1,16 @@
+# Test supported page sizes
+
+testpage() {
+    PAGESIZE=$1
+    $PALAY -p $PAGESIZE -o actual-$PAGESIZE.pdf <<EOF
+paragraph("$PAGESIZE")
+EOF
+    $COMPAREPDF expected-$PAGESIZE.pdf actual-$PAGESIZE.pdf
+}
+
+# These need to be investigated:
+# B9 B6 Comm10E DLE A1 A2 A3 A5 A6 A7 A8 A9 B0 B1 B2 B3
+PAGESIZES="letter A4 B5 Legal A0 B0 B4 B5 B7 B8 B10 C5E Folio Ledger Tabloid"
+for PAGESIZE in $PAGESIZES; do
+    testpage $PAGESIZE
+done
