@@ -355,7 +355,7 @@ int PalayDocument::image(lua_State *L)
         luaL_error(L, "Failed to load image from file %s", qPrintable(name));
 
     QString imageResourceName = QString::number(im.cacheKey());
-    doc_->addResource(QTextDocument::ImageResource, QUrl(imageResourceName), im);
+    cursorStack_.top().document()->addResource(QTextDocument::ImageResource, QUrl(imageResourceName), im);
 
     QTextImageFormat imageFormat;
     imageFormat.setName(imageResourceName);
