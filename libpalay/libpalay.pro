@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui svg
 greaterThan(QT_MAJOR_VERSION, 4): QT += printsupport
 
 win32 {
@@ -20,14 +20,16 @@ DEFINES += LIBPALAY_LIBRARY
 
 SOURCES += PalayDocument.cpp \
            libpalay.cpp \
-    AbsoluteBlock.cpp
+    AbsoluteBlock.cpp \
+    SvgVectorTextObject.cpp
 
 
 HEADERS +=\
         libpalay_global.h \
         PalayDocument.h \
         libpalay.h \
-    AbsoluteBlock.h
+    AbsoluteBlock.h \
+    SvgVectorTextObject.h
 
 unix:cross_compile {
     LIBS += -llua -ldl

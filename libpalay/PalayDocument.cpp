@@ -12,6 +12,7 @@
 #include <QAbstractTextDocumentLayout>
 #include <QPainter>
 #include <AbsoluteBlock.h>
+#include "SvgVectorTextObject.h"
 
 extern "C"
 {
@@ -54,7 +55,8 @@ namespace {
 PalayDocument::PalayDocument(QObject *parent) :
     QObject(parent),
     doc_(new QTextDocument(this)),
-    printer_(QPrinter::HighResolution)
+    printer_(QPrinter::HighResolution),
+    nextCustomObjectType_(QTextFormat::UserObject + 1)
 {
     cursorStack_.push(QTextCursor(doc_));
 
@@ -344,27 +346,27 @@ int PalayDocument::pageBreak(lua_State *L)
 int PalayDocument::image(lua_State *L)
 {
     QString name = QString::fromUtf8(luaL_checkstring(L, 2));
-    QImage im;
+    float widthPts = -1;
+    float heightPts = -1;
 
-    // Check to see if this literal SVG or a filename
+    if (lua_gettop(L) >= 3)
+        widthPts = luaL_checkinteger(L, 3);
+    if (lua_gettop(L) >= 4)
+        heightPts = luaL_checkinteger(L, 4);
+
+    // Check to see if this literal SVG
     QRegExp svgExp("\\s*(<\\?xml.*\\?>\\s*)?<svg.*<\\/svg>\\s*");
     if (svgExp.exactMatch(name)) {
-        if (!im.loadFromData(name.toUtf8(), "svg"))
-            luaL_error(L, "Error parsing SVG literal");
-    } else if (!im.load(name))
-        luaL_error(L, "Failed to load image from file %s", qPrintable(name));
-
-    QString imageResourceName = QString::number(im.cacheKey());
-    cursorStack_.top().document()->addResource(QTextDocument::ImageResource, QUrl(imageResourceName), im);
-
-    QTextImageFormat imageFormat;
-    imageFormat.setName(imageResourceName);
-    if (lua_gettop(L) >= 3)
-        imageFormat.setWidth(pointsToDotsX(luaL_checkinteger(L, 3)));
-    if (lua_gettop(L) >= 4)
-        imageFormat.setHeight(pointsToDotsY(luaL_checkinteger(L, 4)));
-
-    cursorStack_.top().insertImage(imageFormat);
+        insertSvgImage(L, name, widthPts, heightPts);
+    } else if (name.endsWith(".svg", Qt::CaseInsensitive)) {
+        QFile svgFile(name);
+        if (!svgFile.open(QFile::ReadOnly))
+            luaL_error(L, "Failed to open SVG file %s", qPrintable(name));
+        QString svg = QString::fromUtf8(svgFile.readAll());
+        insertSvgImage(L, svg, widthPts, heightPts);
+    } else {
+        insertBitmapImage(L, name, widthPts, heightPts);
+    }
 
     return 0;
 }
@@ -743,6 +745,39 @@ void PalayDocument::setPageMargins(float left, float top, float right, float bot
     rootFormat.setBottomMargin(bottom);
     doc_->rootFrame()->setFrameFormat(rootFormat);
 
+}
+
+void PalayDocument::insertBitmapImage(lua_State *L, const QString &filename, float widthPts, float heightPts)
+{
+    // Filename - load as a bitmap
+    QImage im;
+    if (!im.load(filename))
+        luaL_error(L, "Failed to load image from file %s", qPrintable(filename));
+
+    QString imageResourceName = QString::number(im.cacheKey());
+    cursorStack_.top().document()->addResource(QTextDocument::ImageResource, QUrl(imageResourceName), im);
+
+    QTextImageFormat imageFormat;
+    imageFormat.setName(imageResourceName);
+    if (widthPts >= 0)
+        imageFormat.setWidth(pointsToDotsX(widthPts));
+    if (heightPts >= 0)
+        imageFormat.setHeight(pointsToDotsX(heightPts));
+
+    cursorStack_.top().insertImage(imageFormat);
+}
+
+void PalayDocument::insertSvgImage(lua_State *L, const QString &svg, float widthPts, float heightPts)
+{
+    SvgVectorTextObject *svgTextFormatInterface = new SvgVectorTextObject(svg, widthPts, heightPts, this);
+    if (!svgTextFormatInterface->isValid())
+        luaL_error(L, "Error parsing SVG");
+
+    int objectType = nextCustomObjectType_++;
+    cursorStack_.top().document()->documentLayout()->registerHandler(objectType, svgTextFormatInterface);
+    QTextCharFormat format;
+    format.setObjectType(objectType);
+    cursorStack_.top().insertText(QString(QChar::ObjectReplacementCharacter), format);
 }
 
 void PalayDocument::print()

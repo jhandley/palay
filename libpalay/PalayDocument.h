@@ -56,7 +56,8 @@ private:
     Qt::Corner getCorner(lua_State *L, int index);
     void setPageSize(QPrinter::PaperSize size);
     void setPageMargins(float left, float top, float right, float bottom);
-
+    void insertBitmapImage(lua_State *L, const QString &filename, float widthPts, float heightPts);
+    void insertSvgImage(lua_State *L, const QString &svg, float widthPts, float heightPts);
     void print();
     void drawAbsoluteBlocks(QPainter *painter, const QRectF &view);
 
@@ -72,6 +73,7 @@ private:
     QPrinter printer_;
     QList<AbsoluteBlock*> absoluteBlocks_;
     QStack<Formats> formatStack_;
+    int nextCustomObjectType_;
 };
 
 #endif // PALAYDOCUMENT_H
