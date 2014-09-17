@@ -13,7 +13,6 @@
 #include <QPainter>
 #include <AbsoluteBlock.h>
 #include "SvgVectorTextObject.h"
-#include <QDebug>
 
 extern "C"
 {
@@ -108,17 +107,6 @@ PalayDocument::PalayDocument(QObject *parent) :
                    pointsToDotsY(37),
                    pointsToDotsX(54),
                    pointsToDotsY(37));
-
-#if 0
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
-    QMarginsF margins = printer_.pageLayout().margins();
-    qDebug() << margins;
-    qDebug() << printer_.pageLayout();
-    qDebug() << defaultFormat.block_;
-    qDebug() << defaultFormat.block_.lineHeight();
-    qDebug() << defaultFormat.block_.lineHeightType();
-#endif
-#endif
 }
 
 PalayDocument::~PalayDocument()
@@ -827,20 +815,6 @@ void PalayDocument::print()
     const qreal dpiScaleX = qreal(printer_.logicalDpiX()) / qt_defaultDpiX();
     const qreal dpiScaleY = qreal(printer_.logicalDpiY()) / qt_defaultDpiY();
     painter.scale(dpiScaleX, dpiScaleY);
-
-#if 0
-    // At this point, we're at the qt_defaultDpi (96x96 on the desktop)
-    painter.setPen(QPen(QBrush(Qt::black), 1));
-    painter.drawLine(pointsToDotsX(54),
-                     pointsToDotsY(37),
-                     pointsToDotsX(54) + pointsToDotsX(72),
-                     pointsToDotsY(37));
-    painter.drawLine(pointsToDotsX(54),
-                     pointsToDotsY(37),
-                     pointsToDotsX(54),
-                     pointsToDotsY(37) + pointsToDotsX(72));
-    qDebug("dpiScale=%f,%f, logicalDpi=%d,%d", dpiScaleX, dpiScaleY, printer_.logicalDpiX(), printer_.logicalDpiY());
-#endif
 
     qreal pageWidth = doc_->pageSize().width();
     qreal pageHeight = doc_->pageSize().height();
