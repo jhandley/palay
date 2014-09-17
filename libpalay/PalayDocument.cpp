@@ -73,12 +73,21 @@ PalayDocument::PalayDocument(QObject *parent) :
     // is space between the borders of adjacent cells.
     defaultFormat.table_.setCellSpacing(0);
     // Qt's default format of 2 is kinda cramped.
-    defaultFormat.table_.setCellPadding(4);
+    defaultFormat.table_.setCellPadding(pointsToDotsX(4));
     defaultFormat.table_.setBorderBrush(QBrush(Qt::black));
-    defaultFormat.table_.setBorder(1);
+    defaultFormat.table_.setBorder(pointsToDotsX(1));
     defaultFormat.table_.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
-
+    defaultFormat.table_.setPadding(0);
+    defaultFormat.table_.setMargin(0);
     defaultFormat.frame_.setBorderStyle(QTextFrameFormat::BorderStyle_None);
+    defaultFormat.frame_.setBorder(0);
+    defaultFormat.frame_.setPadding(0);
+    defaultFormat.frame_.setMargin(0);
+    defaultFormat.block_.setBottomMargin(0);
+    defaultFormat.block_.setTopMargin(0);
+    defaultFormat.block_.setLeftMargin(0);
+    defaultFormat.block_.setRightMargin(0);
+    defaultFormat.block_.setBottomMargin(0);
     formatStack_.push(defaultFormat);
 
     printer_.setOutputFormat(QPrinter::PdfFormat);
