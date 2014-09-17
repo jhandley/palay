@@ -328,9 +328,17 @@ int PalayDocument::endTable(lua_State *L)
         luaL_error(L, "endTable called with no matching call to startTable()");
 
     cursorStack_.pop();
+
     // Saved cursor is in the parent frame of table so moving to last position
     // in that frame moves past end of table.
-    cursorStack_.top() = cursorStack_.top().currentFrame()->lastCursorPosition();
+    if (cursorStack_.top().currentTable()) {
+        // But if we are in a table cell (i.e. nested table) then move to the end
+        // of the cell not the entire table.
+        QTextTableCell currentCell = cursorStack_.top().currentTable()->cellAt(cursorStack_.top());
+        cursorStack_.top() = currentCell.lastCursorPosition();
+    } else {
+        cursorStack_.top() = cursorStack_.top().currentFrame()->lastCursorPosition();
+    }
     return 0;
 }
 
