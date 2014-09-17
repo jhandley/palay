@@ -69,6 +69,8 @@ PalayDocument::PalayDocument(QObject *parent) :
     defaultFormat.char_.setFontUnderline(false);
     defaultFormat.char_.setForeground(QBrush(Qt::black));
 
+    defaultFormat.block_.setAlignment(Qt::AlignLeft);
+
     // Qt's default spacing of 2 causes screwy looking borders since there
     // is space between the borders of adjacent cells.
     defaultFormat.table_.setCellSpacing(0);
@@ -98,12 +100,13 @@ PalayDocument::PalayDocument(QObject *parent) :
     // the printer. This way we can position absolute blocks
     // outside the margin for stuff like page numbers
     // and footnotes.
+    setPageSize(QPrinter::Letter);
+    printer_.setFullPage(true);
     printer_.setPageMargins(0,0,0,0,QPrinter::Millimeter);
     setPageMargins(pointsToDotsX(54),
                    pointsToDotsY(37),
                    pointsToDotsX(54),
                    pointsToDotsY(37));
-    setPageSize(QPrinter::Letter);
 }
 
 PalayDocument::~PalayDocument()
@@ -815,6 +818,7 @@ void PalayDocument::print()
 
     qreal pageWidth = doc_->pageSize().width();
     qreal pageHeight = doc_->pageSize().height();
+
     QAbstractTextDocumentLayout *layout = doc_->documentLayout();
 
     for (int pageNumber = 1; pageNumber <= doc_->pageCount(); ++pageNumber) {

@@ -9,7 +9,6 @@ extern "C"
 #include <QApplication>
 #include <stdio.h>
 #include <getopt.h>
-#include <QPrinter>
 #include <QFile>
 #include "libpalay.h"
 #include <QTextStream>
@@ -175,7 +174,7 @@ int main(int argc, char *argv[])
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
     QGuiApplication a(argc, argv);
 #else
-    QApplication a(argc, argv, true);
+    QApplication a(argc, argv, false);
 #endif
 
     QString outputFilename;

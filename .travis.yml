@@ -5,7 +5,7 @@ language: c
 #        - master
 env:
      - QT5PKG= RUN_QT5=
-     - QT5PKG="qt5-qmake qtbase5-dev" RUN_QT5=-qt=qt5
+#     - QT5PKG="qt5-qmake qtbase5-dev" RUN_QT5=-qt=qt5
 
 # Install the needed packages and start an X server since Qt really wants to
 # have one around.
@@ -13,8 +13,8 @@ before_install:
      - sudo add-apt-repository --yes ppa:ubuntu-sdk-team/ppa
      - sudo apt-get update -qq
      - sudo apt-get install -qq liblua5.2-dev poppler-utils ttf-dejavu $QT5PKG
-     - "export DISPLAY=:99.0"
-     - "sh -e /etc/init.d/xvfb start"
+#     - "export DISPLAY=:99.0"
+#     - "sh -e /etc/init.d/xvfb start"
 
 script:
     - qmake $RUN_QT5 -v
