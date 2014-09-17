@@ -3,9 +3,9 @@
 testpage() {
     PAGESIZE=$1
     $PALAY -p $PAGESIZE -o actual-$PAGESIZE.pdf <<EOF
-paragraph("$PAGESIZE")
+text("$PAGESIZE")
 EOF
-    $COMPAREPDF expected-$PAGESIZE.pdf actual-$PAGESIZE.pdf
+    $COMPAREPDF actual-$PAGESIZE.pdf expected-$PAGESIZE.pdf
 }
 
 # These need to be investigated:
