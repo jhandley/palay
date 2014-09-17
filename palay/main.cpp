@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
     QGuiApplication a(argc, argv);
 #else
-    QApplication a(argc, argv, true); // true for SVG support
+    QApplication a(argc, argv, false);
 #endif
 
     QString outputFilename;
