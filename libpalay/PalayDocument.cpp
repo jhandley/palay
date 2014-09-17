@@ -13,6 +13,7 @@
 #include <QPainter>
 #include <AbsoluteBlock.h>
 #include "SvgVectorTextObject.h"
+#include <QDebug>
 
 extern "C"
 {
@@ -69,6 +70,8 @@ PalayDocument::PalayDocument(QObject *parent) :
     defaultFormat.char_.setFontUnderline(false);
     defaultFormat.char_.setForeground(QBrush(Qt::black));
 
+    defaultFormat.block_.setAlignment(Qt::AlignLeft);
+
     // Qt's default spacing of 2 causes screwy looking borders since there
     // is space between the borders of adjacent cells.
     defaultFormat.table_.setCellSpacing(0);
@@ -98,12 +101,24 @@ PalayDocument::PalayDocument(QObject *parent) :
     // the printer. This way we can position absolute blocks
     // outside the margin for stuff like page numbers
     // and footnotes.
+    setPageSize(QPrinter::Letter);
+    printer_.setFullPage(true);
     printer_.setPageMargins(0,0,0,0,QPrinter::Millimeter);
     setPageMargins(pointsToDotsX(54),
                    pointsToDotsY(37),
                    pointsToDotsX(54),
                    pointsToDotsY(37));
-    setPageSize(QPrinter::Letter);
+
+#if 0
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
+    QMarginsF margins = printer_.pageLayout().margins();
+    qDebug() << margins;
+    qDebug() << printer_.pageLayout();
+    qDebug() << defaultFormat.block_;
+    qDebug() << defaultFormat.block_.lineHeight();
+    qDebug() << defaultFormat.block_.lineHeightType();
+#endif
+#endif
 }
 
 PalayDocument::~PalayDocument()
@@ -813,8 +828,23 @@ void PalayDocument::print()
     const qreal dpiScaleY = qreal(printer_.logicalDpiY()) / qt_defaultDpiY();
     painter.scale(dpiScaleX, dpiScaleY);
 
+#if 0
+    // At this point, we're at the qt_defaultDpi (96x96 on the desktop)
+    painter.setPen(QPen(QBrush(Qt::black), 1));
+    painter.drawLine(pointsToDotsX(54),
+                     pointsToDotsY(37),
+                     pointsToDotsX(54) + pointsToDotsX(72),
+                     pointsToDotsY(37));
+    painter.drawLine(pointsToDotsX(54),
+                     pointsToDotsY(37),
+                     pointsToDotsX(54),
+                     pointsToDotsY(37) + pointsToDotsX(72));
+    qDebug("dpiScale=%f,%f, logicalDpi=%d,%d", dpiScaleX, dpiScaleY, printer_.logicalDpiX(), printer_.logicalDpiY());
+#endif
+
     qreal pageWidth = doc_->pageSize().width();
     qreal pageHeight = doc_->pageSize().height();
+
     QAbstractTextDocumentLayout *layout = doc_->documentLayout();
 
     for (int pageNumber = 1; pageNumber <= doc_->pageCount(); ++pageNumber) {
