@@ -1,0 +1,15 @@
+# Check a simple table
+$PALAY -o actual.pdf <<EOF
+style({border_style="Solid", border_width=1})
+startTable(5, 2)
+for r = 1, 5 do
+    for c = 1, 2 do
+        cell(r, c)
+        text(string.format("%d, %d", r, c))
+    end
+end
+endTable()
+EOF
+
+$COMPAREPDF expected.pdf actual.pdf
+
