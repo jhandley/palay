@@ -27,3 +27,6 @@ palay.pro.user
 Makefile
 moc_*.cpp
 qrc_*.cpp
+
+# Unit test files
+actual*.pdf

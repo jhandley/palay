@@ -62,6 +62,13 @@ PalayDocument::PalayDocument(QObject *parent) :
 
     Formats defaultFormat;
 
+    defaultFormat.char_.setFontFamily("DejaVuSans");
+    defaultFormat.char_.setFontPointSize(12);
+    defaultFormat.char_.setFontWeight(QFont::Normal);
+    defaultFormat.char_.setFontItalic(false);
+    defaultFormat.char_.setFontUnderline(false);
+    defaultFormat.char_.setForeground(QBrush(Qt::black));
+
     // Qt's default spacing of 2 causes screwy looking borders since there
     // is space between the borders of adjacent cells.
     defaultFormat.table_.setCellSpacing(0);
