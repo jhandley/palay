@@ -1,0 +1,7 @@
+# Check that multiple lines render consistently
+$PALAY -o actual.pdf <<EOF
+text("Line1\nLine2")
+EOF
+
+$COMPAREPDF expected.pdf actual.pdf
+
