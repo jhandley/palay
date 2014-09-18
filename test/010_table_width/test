@@ -1,5 +1,6 @@
 # Test changing cell on individual edges
 $PALAY -o actual.pdf <<EOF
+--[[
 style({width="page", border_style="Solid", border_width=1})
 startTable(1,1)
 cell(1,1)
@@ -23,7 +24,7 @@ startTable(1,1)
 cell(1,1)
 text("variable")
 endTable()
-
+]]
 EOF
 
 $COMPAREPDF expected.pdf actual.pdf
