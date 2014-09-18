@@ -58,8 +58,6 @@ PalayDocument::PalayDocument(QObject *parent) :
     printer_(QPrinter::HighResolution),
     nextCustomObjectType_(QTextFormat::UserObject + 1)
 {
-    cursorStack_.push(QTextCursor(doc_));
-
     Formats defaultFormat;
 
     defaultFormat.char_.setFontFamily("DejaVuSans");
@@ -93,6 +91,12 @@ PalayDocument::PalayDocument(QObject *parent) :
     defaultFormat.cell_.setPadding(pointsToDotsX(4));
     formatStack_.push(defaultFormat);
 
+    QTextCursor initialCursor(doc_);
+    initialCursor.setBlockFormat(defaultFormat.block_);
+    initialCursor.setBlockCharFormat(defaultFormat.char_);
+    initialCursor.setCharFormat(defaultFormat.char_);
+    cursorStack_.push(initialCursor);
+
     printer_.setOutputFormat(QPrinter::PdfFormat);
     printer_.setColorMode(QPrinter::Color);
     doc_->setDocumentMargin(0);
@@ -116,8 +120,21 @@ PalayDocument::~PalayDocument()
 
 int PalayDocument::paragraph(lua_State *L)
 {
-    cursorStack_.top().insertBlock(formatStack_.top().block_);
+    QTextBlock currentBlock = cursorStack_.top().block();
+    if (currentBlock.begin().atEnd()) {
+        // If the current block is empty then don't add a new one, just reuse the existing one.
+        // This will be the case for the first block in the document or first block in
+        // a table cell or frame.
+        QTextCursor tc(currentBlock);
+        tc.setBlockFormat(formatStack_.top().block_);
+        tc.setBlockCharFormat(formatStack_.top().char_);
+    } else {
+        // Create a new block.
+        cursorStack_.top().insertBlock(formatStack_.top().block_, formatStack_.top().char_);
+    }
+
     text(L);
+
     return 0;
 }
 
@@ -635,7 +652,7 @@ int PalayDocument::pageMargins(lua_State *L)
 {
     setPageMargins(pointsToDotsX(luaL_checkinteger(L, 2)),
                    pointsToDotsY(luaL_checkinteger(L, 3)),
-                   pointsToDotsY(luaL_checkinteger(L, 4)),
+                   pointsToDotsX(luaL_checkinteger(L, 4)),
                    pointsToDotsY(luaL_checkinteger(L, 5)));
     return 0;
 }
@@ -872,7 +889,6 @@ void PalayDocument::print()
     const qreal dpiScaleX = qreal(printer_.logicalDpiX()) / qt_defaultDpiX();
     const qreal dpiScaleY = qreal(printer_.logicalDpiY()) / qt_defaultDpiY();
     painter.scale(dpiScaleX, dpiScaleY);
-
     qreal pageWidth = doc_->pageSize().width();
     qreal pageHeight = doc_->pageSize().height();
 
@@ -895,6 +911,7 @@ void PalayDocument::print()
         if (pageNumber != doc_->pageCount())
             printer_.newPage();
     }
+
     painter.end();
 }
 
@@ -908,3 +925,22 @@ void PalayDocument::drawAbsoluteBlocks(QPainter *painter, const QRectF &view)
     }
 }
 
+void PalayDocument::dump()
+{
+    QTextBlock currentBlock = doc_->begin();
+
+    while (currentBlock.isValid()) {
+        qDebug("Block %d:", currentBlock.blockNumber());
+        QTextBlock::iterator it;
+        for (it = currentBlock.begin(); !(it.atEnd()); ++it) {
+            QTextFragment currentFragment = it.fragment();
+            if (currentFragment.isValid()) {
+                qDebug("\tFragment: \"%s\" (%s)", qPrintable(currentFragment.text()),
+                                                  qPrintable(currentFragment.charFormat().font().toString()));
+            } else {
+                qDebug("\tInvalid fragment");
+            }
+        }
+        currentBlock = currentBlock.next();
+    }
+}

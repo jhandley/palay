@@ -63,6 +63,8 @@ private:
     void print();
     void drawAbsoluteBlocks(QPainter *painter, const QRectF &view);
 
+    void dump();
+
     struct Formats {
         QTextTableFormat table_;
         QTextBlockFormat block_;
