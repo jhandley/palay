@@ -1,0 +1,30 @@
+# Test changing cell on individual edges
+$PALAY -o actual.pdf <<EOF
+style({width="page", border_style="Solid", border_width=1})
+startTable(1,1)
+cell(1,1)
+text("page")
+endTable()
+
+style({width = "inside_page"})
+startTable(1,1)
+cell(1,1)
+text("inside_page")
+endTable()
+
+style({width = 300})
+startTable(1,1)
+cell(1,1)
+text("300")
+endTable()
+
+style({width="variable"})
+startTable(1,1)
+cell(1,1)
+text("variable")
+endTable()
+
+EOF
+
+$COMPAREPDF expected.pdf actual.pdf
+
