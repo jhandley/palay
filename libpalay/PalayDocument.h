@@ -3,12 +3,14 @@
 
 #include <QObject>
 #include <QTextDocument>
+#include <QTextBlockFormat>
+#include <QTextCharFormat>
 #include <QTextTableFormat>
+#include <QTextTableCellFormat>
 #include <QStack>
 #include <QPrinter>
 
 struct lua_State;
-class QTextCharFormat;
 class AbsoluteBlock;
 
 class PalayDocument : public QObject
@@ -66,6 +68,7 @@ private:
         QTextBlockFormat block_;
         QTextCharFormat char_;
         QTextFrameFormat frame_;
+        QTextTableCellFormat cell_;
     };
 
     QTextDocument *doc_;

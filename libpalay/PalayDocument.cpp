@@ -74,8 +74,8 @@ PalayDocument::PalayDocument(QObject *parent) :
     // Qt's default spacing of 2 causes screwy looking borders since there
     // is space between the borders of adjacent cells.
     defaultFormat.table_.setCellSpacing(0);
-    // Qt's default format of 2 is kinda cramped.
-    defaultFormat.table_.setCellPadding(pointsToDotsX(4));
+    // We will set padding on individual cells
+    defaultFormat.table_.setCellPadding(0);
     defaultFormat.table_.setBorderBrush(QBrush(Qt::black));
     defaultFormat.table_.setBorder(pointsToDotsX(1));
     defaultFormat.table_.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
@@ -90,6 +90,7 @@ PalayDocument::PalayDocument(QObject *parent) :
     defaultFormat.block_.setLeftMargin(0);
     defaultFormat.block_.setRightMargin(0);
     defaultFormat.block_.setBottomMargin(0);
+    defaultFormat.cell_.setPadding(pointsToDotsX(4));
     formatStack_.push(defaultFormat);
 
     printer_.setOutputFormat(QPrinter::PdfFormat);
@@ -182,7 +183,27 @@ int PalayDocument::style(lua_State *L)
             if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) < 0)
                 luaL_error(L, "Invalid value for cell_padding. Must be a positive number.");
             qreal padding = pointsToDotsX(lua_tonumber(L, -1));
-            formatStack_.top().table_.setCellPadding(padding);
+            formatStack_.top().cell_.setPadding(padding);
+        } else if (qstricmp(key, "cell_left_padding") == 0) {
+            if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) < 0)
+                luaL_error(L, "Invalid value for cell_left_padding. Must be a positive number.");
+            qreal padding = pointsToDotsX(lua_tonumber(L, -1));
+            formatStack_.top().cell_.setLeftPadding(padding);
+        } else if (qstricmp(key, "cell_right_padding") == 0) {
+            if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) < 0)
+                luaL_error(L, "Invalid value for cell_right_padding. Must be a positive number.");
+            qreal padding = pointsToDotsX(lua_tonumber(L, -1));
+            formatStack_.top().cell_.setRightPadding(padding);
+        } else if (qstricmp(key, "cell_top_padding") == 0) {
+            if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) < 0)
+                luaL_error(L, "Invalid value for cell_top_padding. Must be a positive number.");
+            qreal padding = pointsToDotsX(lua_tonumber(L, -1));
+            formatStack_.top().cell_.setTopPadding(padding);
+        } else if (qstricmp(key, "cell_bottom_padding") == 0) {
+            if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) < 0)
+                luaL_error(L, "Invalid value for cell_bottom_padding. Must be a positive number.");
+            qreal padding = pointsToDotsX(lua_tonumber(L, -1));
+            formatStack_.top().cell_.setBottomPadding(padding);
         } else if (qstricmp(key, "border_style") == 0) {
             QTextFrameFormat::BorderStyle borderStyle = getBorderStyle(L, -1);
             formatStack_.top().table_.setBorderStyle(borderStyle);
@@ -213,30 +234,44 @@ int PalayDocument::style(lua_State *L)
             formatStack_.top().block_.setAlignment(align);
             formatStack_.top().table_.setAlignment(align);
         } else if (qstricmp(key, "width") == 0) {
-            if (!lua_isnumber(L, -1) || (lua_tonumber(L, -1) <= 0 && lua_tonumber(L, -1) != -1))
-                luaL_error(L, "Invalid value for width. Must be a positive number or -1 for variable.");
-            qreal widthPoints = lua_tonumber(L, -1);
-            if (widthPoints == -1) {
-                // variable
-                formatStack_.top().table_.setWidth(QTextLength());
-                formatStack_.top().frame_.setWidth(QTextLength());
-            } else {
-                qreal widthDots = pointsToDotsX(widthPoints);
+            if (lua_isnumber(L, -1) && lua_tonumber(L, -1) >= 0) {
+                qreal widthDots = pointsToDotsX(lua_tonumber(L, -1));
                 formatStack_.top().table_.setWidth(widthDots);
                 formatStack_.top().frame_.setWidth(widthDots);
-            }
-         } else if (qstricmp(key, "height") == 0) {
-            if (!lua_isnumber(L, -1) || (lua_tonumber(L, -1) <= 0 && lua_tonumber(L, -1) != -1))
-                luaL_error(L, "Invalid value for height. Must be a positive number or -1 for variable.");
-            qreal heightPoints = lua_tonumber(L, -1);
-            if (heightPoints == -1) {
-                // variable
-                formatStack_.top().table_.setHeight(QTextLength());
-                formatStack_.top().frame_.setHeight(QTextLength());
+            } else if (lua_isstring(L, -1) && (qstricmp(lua_tostring(L, -1), "variable") == 0)) {
+                formatStack_.top().table_.setWidth(QTextLength());
+                formatStack_.top().frame_.setWidth(QTextLength());
+            } else if (lua_isstring(L, -1) && (qstricmp(lua_tostring(L, -1), "page") == 0)) {
+                qreal widthDots = doc_->pageSize().width();
+                formatStack_.top().table_.setWidth(widthDots);
+                formatStack_.top().frame_.setWidth(widthDots);
+            } else if (lua_isstring(L, -1) && (qstricmp(lua_tostring(L, -1), "inside_page") == 0)) {
+                QTextFrameFormat rootFormat = doc_->rootFrame()->frameFormat();
+                qreal widthDots = doc_->pageSize().width() - rootFormat.leftMargin() - rootFormat.rightMargin();
+                formatStack_.top().table_.setWidth(widthDots);
+                formatStack_.top().frame_.setWidth(widthDots);
             } else {
-                qreal heightDots = pointsToDotsY(heightPoints);
+                luaL_error(L, "Invalid value for width. Must be a positive number, \"page\", \"inside_page\", or \"variable\".");
+            }
+        } else if (qstricmp(key, "height") == 0) {
+            if (lua_isnumber(L, -1) && lua_tonumber(L, -1) >= 0) {
+                qreal heightDots = pointsToDotsY(lua_tonumber(L, -1));
                 formatStack_.top().table_.setHeight(heightDots);
                 formatStack_.top().frame_.setHeight(heightDots);
+            } else if (lua_isstring(L, -1) && (qstricmp(lua_tostring(L, -1), "variable") == 0)) {
+                formatStack_.top().table_.setHeight(QTextLength());
+                formatStack_.top().frame_.setHeight(QTextLength());
+            } else if (lua_isstring(L, -1) && (qstricmp(lua_tostring(L, -1), "page") == 0)) {
+                qreal heightDots = doc_->pageSize().height();
+                formatStack_.top().table_.setHeight(heightDots);
+                formatStack_.top().frame_.setHeight(heightDots);
+            } else if (lua_isstring(L, -1) && (qstricmp(lua_tostring(L, -1), "inside_page") == 0)) {
+                QTextFrameFormat rootFormat = doc_->rootFrame()->frameFormat();
+                qreal heightDots = doc_->pageSize().height() - rootFormat.topMargin() - rootFormat.bottomMargin();
+                formatStack_.top().table_.setHeight(heightDots);
+                formatStack_.top().frame_.setHeight(heightDots);
+            } else {
+                luaL_error(L, "Invalid value for height. Must be a positive number, \"page\", \"inside_page\", or \"variable\".");
             }
         } else if (qstricmp(key, "indent") == 0) {
            if (!lua_isnumber(L, -1) || lua_tonumber(L, -1) < 0)
@@ -306,8 +341,20 @@ int PalayDocument::startTable(lua_State *L)
     // of the table when endTable is called.
     cursorStack_.push(cursorStack_.top());
 
-    cursorStack_.top().insertTable(rows, cols, formatStack_.top().table_);
-
+    // Propogate all current formats to the cells of the table.
+    // The call to cell() will do the same but we may not get a call
+    // for each cell if some are left empty but we still want them to
+    // have the right padding.
+    QTextTable *table = cursorStack_.top().insertTable(rows, cols, formatStack_.top().table_);
+    for (int i = 0; i < table->rows(); ++i) {
+        for (int j = 0; j < table->columns(); ++j) {
+            QTextTableCell cell = table->cellAt(i, j);
+            QTextCursor cellCursor = cell.firstCursorPosition();
+            cell.setFormat(formatStack_.top().cell_);
+            cellCursor.setBlockFormat(formatStack_.top().block_);
+            cellCursor.setCharFormat(formatStack_.top().char_);
+        }
+    }
     return 0;
 }
 
@@ -336,7 +383,17 @@ int PalayDocument::cell(lua_State *L)
     if (rowspan > 1 or colspan > 1)
         table->mergeCells(row - 1, col - 1, rowspan, colspan);
 
-    cursorStack_.top() = table->cellAt(row - 1, col - 1).firstCursorPosition();
+    QTextTableCell tableCell = table->cellAt(row - 1, col - 1);
+    QTextCursor cellCursor = tableCell.firstCursorPosition();
+
+    // Propogate formats to cell (in case any have changed since
+    // table was created).
+    tableCell.setFormat(formatStack_.top().cell_);
+    cellCursor.setBlockFormat(formatStack_.top().block_);
+    cellCursor.setCharFormat(formatStack_.top().char_);
+
+    // Put current cursor at start of cell.
+    cursorStack_.top() = cellCursor;
 
     return 0;
 }
@@ -364,8 +421,8 @@ int PalayDocument::endTable(lua_State *L)
 int PalayDocument::pageBreak(lua_State *L)
 {
     Q_UNUSED(L);
-    QTextBlockFormat breakBlock;
-    breakBlock.setPageBreakPolicy(QTextBlockFormat::PageBreak_AlwaysAfter);
+    QTextBlockFormat breakBlock(formatStack_.top().block_);
+    breakBlock.setPageBreakPolicy(QTextBlockFormat::PageBreak_AlwaysBefore);
     cursorStack_.top().insertBlock(breakBlock);
     return 0;
 }
@@ -850,3 +907,4 @@ void PalayDocument::drawAbsoluteBlocks(QPainter *painter, const QRectF &view)
         }
     }
 }
+
