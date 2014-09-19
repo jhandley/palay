@@ -60,11 +60,10 @@ PalayDocument::PalayDocument(QObject *parent) :
 {
     Formats defaultFormat;
 
-    defaultFormat.char_.setFontFamily("DejaVuSans");
-    defaultFormat.char_.setFontPointSize(12);
-    defaultFormat.char_.setFontWeight(QFont::Normal);
-    defaultFormat.char_.setFontItalic(false);
-    defaultFormat.char_.setFontUnderline(false);
+    QFont defaultFont("DejaVuSans", 12);
+    doc_->setDefaultFont(defaultFont);
+
+    defaultFormat.char_.setFont(defaultFont);
     defaultFormat.char_.setForeground(QBrush(Qt::black));
 
     defaultFormat.block_.setAlignment(Qt::AlignLeft);
@@ -475,8 +474,30 @@ int PalayDocument::image(lua_State *L)
 int PalayDocument::html(lua_State *L)
 {
     QString htmlText = QString::fromUtf8(luaL_checkstring(L, 2));
-    QTextDocumentFragment fragment = QTextDocumentFragment::fromHtml(htmlText);
-    cursorStack_.top().insertFragment(fragment);
+
+    // Add <html> start and end tags if they are not already there.
+    // This ensures that the selector in the default style sheet
+    // below will correctly apply the current font. Palay supports
+    // inserting html fragments like html("<b>foo</b>bar") where there
+    // is text inside any tag (bar in this case) and without wrapping
+    // the fragment in some tag, there is no css selector that can
+    // get that text.
+    QRegExp htmlTagExp("\\s*<html.*<\\/html>\\s*", Qt::CaseInsensitive);
+    if (!htmlTagExp.exactMatch(htmlText))
+        htmlText = QString("<html>") + htmlText + "</html>";
+
+    // Set current font + color as default for the inserted html.
+    // Does not apply to existing html.
+    // There is a bug in QTextDocument when running without GUI
+    // that when you insert html without a specified font color
+    // it gets imported with null color (brush style of zero) and doesn't
+    // get drawn. This works around that problem.
+    doc_->setDefaultStyleSheet(QString("html { color: %1; font-family: \"%2\"; font-size: %3pt; }")
+                               .arg(formatStack_.top().char_.foreground().color().name())
+                               .arg(formatStack_.top().char_.fontFamily())
+                               .arg(formatStack_.top().char_.fontPointSize()));
+
+    cursorStack_.top().insertHtml(htmlText);
     return 0;
 }
 
@@ -935,8 +956,11 @@ void PalayDocument::dump()
         for (it = currentBlock.begin(); !(it.atEnd()); ++it) {
             QTextFragment currentFragment = it.fragment();
             if (currentFragment.isValid()) {
-                qDebug("\tFragment: \"%s\" (%s)", qPrintable(currentFragment.text()),
-                                                  qPrintable(currentFragment.charFormat().font().toString()));
+                qDebug("\tFragment: \"%s\" Font=(%s) Brush=%d %s",
+                       qPrintable(currentFragment.text()),
+                       qPrintable(currentFragment.charFormat().font().toString()),
+                       currentFragment.charFormat().foreground().style(),
+                       qPrintable(currentFragment.charFormat().foreground().color().name()));
             } else {
                 qDebug("\tInvalid fragment");
             }
