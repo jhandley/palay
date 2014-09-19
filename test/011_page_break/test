@@ -1,0 +1,16 @@
+# Check that page breaks between paragraphs and text calls work
+# and that no extra lines are created at top of each page 
+$PALAY -o actual.pdf <<EOF
+paragraph("Page 1")
+pageBreak()
+paragraph("Page 2")
+pageBreak()
+text("Page 3")
+pageBreak()
+text("Page 4")
+pageBreak()
+paragraph("Page 5")
+EOF
+
+$COMPAREPDF expected.pdf actual.pdf
+

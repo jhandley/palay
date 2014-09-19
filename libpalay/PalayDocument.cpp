@@ -126,7 +126,7 @@ int PalayDocument::paragraph(lua_State *L)
         // This will be the case for the first block in the document or first block in
         // a table cell or frame.
         QTextCursor tc(currentBlock);
-        tc.setBlockFormat(formatStack_.top().block_);
+        tc.mergeBlockFormat(formatStack_.top().block_); // merge in case the block format has page break
         tc.setBlockCharFormat(formatStack_.top().char_);
     } else {
         // Create a new block.
