@@ -33,6 +33,7 @@ public:
 
     int pageBreak(lua_State *L);
     int image(lua_State *L);
+    int svg(lua_State *L);
     int html(lua_State *L);
 
     int pageSize(lua_State *L);
@@ -45,12 +46,7 @@ public:
     int startBlock(lua_State *L);
     int endBlock(lua_State *L);
 
-signals:
-
-public slots:
-
 private:
-
     void setFontStyle(lua_State *L, QTextCharFormat &format, int index);
     QTextFrameFormat::BorderStyle getBorderStyle(lua_State *L, int index);
     QColor getColor(lua_State *L, int index);

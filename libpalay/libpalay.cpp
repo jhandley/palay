@@ -87,6 +87,12 @@ static int image(lua_State *L)
     return doc->image(L);
 }
 
+static int svg(lua_State *L)
+{
+    PalayDocument *doc = checkDocument(L, 1);
+    return doc->svg(L);
+}
+
 static int html(lua_State *L)
 {
     PalayDocument *doc = checkDocument(L, 1);
@@ -175,6 +181,7 @@ static const struct luaL_Reg palaydoc_methods[] = {
     {"cell", cell},
     {"endTable", endTable},
     {"image", image},
+    {"svg", svg},
     {"html", html},
     {"saveAs", saveAs},
     {"getPageWidth", getPageWidth},

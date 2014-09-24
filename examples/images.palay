@@ -15,7 +15,7 @@ text("text")
 
 paragraph("SVG")
 paragraph("")
-image([[<svg height="150" width="150">
+svg([[<svg height="150" width="150">
 <circle cx="60" cy="60" r="50" stroke="black" stroke-width="3" fill="yellow" />
 <circle cx="40" cy="40" r="10" fill="black" />
 <circle cx="80" cy="40" r="10" fill="black" />

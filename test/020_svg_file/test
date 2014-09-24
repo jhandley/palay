@@ -1,0 +1,7 @@
+# Check that a simple SVG works
+$PALAY -o actual.pdf <<EOF
+image("face.svg")
+EOF
+
+$COMPAREPDF expected.pdf actual.pdf
+

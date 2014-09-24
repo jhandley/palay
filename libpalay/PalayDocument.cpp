@@ -455,11 +455,7 @@ int PalayDocument::image(lua_State *L)
     if (lua_gettop(L) >= 4)
         heightPts = luaL_checkinteger(L, 4);
 
-    // Check to see if this literal SVG
-    QRegExp svgExp("\\s*(<\\?xml.*\\?>\\s*)?<svg.*<\\/svg>\\s*");
-    if (svgExp.exactMatch(name)) {
-        insertSvgImage(L, name, widthPts, heightPts);
-    } else if (name.endsWith(".svg", Qt::CaseInsensitive)) {
+    if (name.endsWith(".svg", Qt::CaseInsensitive)) {
         QFile svgFile(name);
         if (!svgFile.open(QFile::ReadOnly))
             luaL_error(L, "Failed to open SVG file %s", qPrintable(name));
@@ -468,6 +464,22 @@ int PalayDocument::image(lua_State *L)
     } else {
         insertBitmapImage(L, name, widthPts, heightPts);
     }
+
+    return 0;
+}
+
+int PalayDocument::svg(lua_State *L)
+{
+    QString contents = QString::fromUtf8(luaL_checkstring(L, 2));
+    float widthPts = -1;
+    float heightPts = -1;
+
+    if (lua_gettop(L) >= 3)
+        widthPts = luaL_checkinteger(L, 3);
+    if (lua_gettop(L) >= 4)
+        heightPts = luaL_checkinteger(L, 4);
+
+    insertSvgImage(L, contents, widthPts, heightPts);
 
     return 0;
 }
