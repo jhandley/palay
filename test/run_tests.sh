@@ -3,6 +3,10 @@
 SCRIPT_NAME=$0
 TEST_DIR=$(dirname $(readlink -f $0))
 
+red='\E[31m'
+green='\E[32m'
+normal='\E[0m'
+
 PALAY=$TEST_DIR/../palay/palay
 COMPAREPDF=$TEST_DIR/diffpdf.sh
 
@@ -15,6 +19,7 @@ export COMPAREPDF
 # point to libpalay.so
 export LD_LIBRARY_PATH=$TEST_DIR/../libpalay
 
+FAILED=false
 run() {
     TEST=$1
     echo Running $TEST...
@@ -23,12 +28,12 @@ run() {
     # Clean up any previous results
     rm -f actual*
     if ! sh -e test; then
-        echo $TEST failed!
-	exit 1
+        echo -e "${red}$TEST failed!$normal"
+        FAILED=true
+    else
+        # Clean up results since it passed
+        rm -f actual*
     fi
-
-    # Clean up results since everything passed
-    rm -f actual*
 }
 
 cd $TEST_DIR
@@ -37,6 +42,10 @@ for TEST in $TESTS; do
     run $TEST
 done
 
-echo All tests passed!
-exit 0
-
+if $FAILED; then
+    echo -e "${red}One or more tests failed!$normal"
+    exit 1
+else
+    echo -e "${green}All tests passed!$normal"
+    exit 0
+fi
