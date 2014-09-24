@@ -1,0 +1,9 @@
+# Check that a simple SVG works
+$PALAY -o actual.pdf <<EOF
+text("Inline with ")
+image("../../examples/pele.jpg", 20)
+text(" text")
+EOF
+
+$COMPAREPDF expected.pdf actual.pdf
+

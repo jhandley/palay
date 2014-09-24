@@ -13,6 +13,7 @@
 #include <QPainter>
 #include <AbsoluteBlock.h>
 #include "SvgVectorTextObject.h"
+#include "BitmapTextObject.h"
 
 extern "C"
 {
@@ -866,7 +867,6 @@ void PalayDocument::setPageMargins(float left, float top, float right, float bot
     rootFormat.setRightMargin(right);
     rootFormat.setBottomMargin(bottom);
     doc_->rootFrame()->setFrameFormat(rootFormat);
-
 }
 
 void PalayDocument::insertBitmapImage(lua_State *L, const QString &filename, float widthPts, float heightPts)
@@ -876,17 +876,12 @@ void PalayDocument::insertBitmapImage(lua_State *L, const QString &filename, flo
     if (!im.load(filename))
         luaL_error(L, "Failed to load image from file %s", qPrintable(filename));
 
-    QString imageResourceName = QString::number(im.cacheKey());
-    cursorStack_.top().document()->addResource(QTextDocument::ImageResource, QUrl(imageResourceName), im);
-
-    QTextImageFormat imageFormat;
-    imageFormat.setName(imageResourceName);
-    if (widthPts >= 0)
-        imageFormat.setWidth(pointsToDotsX(widthPts));
-    if (heightPts >= 0)
-        imageFormat.setHeight(pointsToDotsX(heightPts));
-
-    cursorStack_.top().insertImage(imageFormat);
+    BitmapTextObject *bitmapTextFormatInterface = new BitmapTextObject(im, pointsToDotsX(widthPts), pointsToDotsX(heightPts));
+    int objectType = nextCustomObjectType_++;
+    cursorStack_.top().document()->documentLayout()->registerHandler(objectType, bitmapTextFormatInterface);
+    QTextCharFormat format;
+    format.setObjectType(objectType);
+    cursorStack_.top().insertText(QString(QChar::ObjectReplacementCharacter), format);
 }
 
 void PalayDocument::insertSvgImage(lua_State *L, const QString &svg, float widthPts, float heightPts)

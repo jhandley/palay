@@ -3,14 +3,14 @@ paragraph("")
 
 paragraph("Default width/height")
 paragraph("")
-image("pele.png")
+image("pele.jpg")
 
 paragraph("Width/height specified 100x200")
 paragraph("")
-image("pele.png", 100, 200)
+image("pele.jpg", 100, 200)
 
 paragraph("Inline with")
-image("pele.png", 10, 20)
+image("pele.jpg", 10, 20)
 text("text")
 
 paragraph("SVG")

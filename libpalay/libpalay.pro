@@ -21,7 +21,8 @@ DEFINES += LIBPALAY_LIBRARY
 SOURCES += PalayDocument.cpp \
            libpalay.cpp \
     AbsoluteBlock.cpp \
-    SvgVectorTextObject.cpp
+    SvgVectorTextObject.cpp \
+    BitmapTextObject.cpp
 
 
 HEADERS +=\
@@ -29,7 +30,8 @@ HEADERS +=\
         PalayDocument.h \
         libpalay.h \
     AbsoluteBlock.h \
-    SvgVectorTextObject.h
+    SvgVectorTextObject.h \
+    BitmapTextObject.h
 
 unix:cross_compile {
     LIBS += -llua -ldl
