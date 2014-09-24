@@ -1,0 +1,15 @@
+# Check that a simple SVG works
+$PALAY -o actual.pdf <<EOF
+text("Styles")
+style({font_style="Bold"})
+paragraph("Bold")
+style({font_style="Italic"})
+paragraph("Italic")
+style({font_style="Underline"})
+paragraph("Underline")
+style({font_style="Bold Italic Underline"})
+paragraph("Bold + italic + underline")
+EOF
+
+$COMPAREPDF expected.pdf actual.pdf
+

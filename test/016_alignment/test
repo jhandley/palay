@@ -1,0 +1,13 @@
+# Check that a simple SVG works
+$PALAY -o actual.pdf <<EOF
+text("Alignment test")
+style({alignment = "Right"})
+paragraph("Right")
+style({alignment = "Left"})
+paragraph("Left")
+style({alignment = "HCenter"})
+paragraph("Centered")
+EOF
+
+$COMPAREPDF expected.pdf actual.pdf
+

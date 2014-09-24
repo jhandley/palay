@@ -1,0 +1,14 @@
+# Check that a simple SVG works
+$PALAY -o actual.pdf <<EOF
+style({font_family = "Helvetica", font_size=6, font_style="Normal"})
+text("6 point")
+style({font_size=12})
+text("12 point")
+style({font_size=24})
+text("24 point")
+style({font_size=48})
+text("48 point")
+EOF
+
+$COMPAREPDF expected.pdf actual.pdf
+
