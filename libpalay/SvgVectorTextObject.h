@@ -28,7 +28,7 @@ class SvgVectorTextObject : public QObject, public QTextObjectInterface
     Q_INTERFACES(QTextObjectInterface)
 
 public:
-    explicit SvgVectorTextObject(const QString &svg, float width = -1, float height = -1, QObject *parent = 0);
+    explicit SvgVectorTextObject(const QByteArray &svgContents, float width = -1, float height = -1, QObject *parent = 0);
 
     bool isValid() const;
 

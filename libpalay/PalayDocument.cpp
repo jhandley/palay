@@ -475,8 +475,8 @@ int PalayDocument::image(lua_State *L)
         QFile svgFile(name);
         if (!svgFile.open(QFile::ReadOnly))
             luaL_error(L, "Failed to open SVG file %s", qPrintable(name));
-        QString svg = QString::fromUtf8(svgFile.readAll());
-        insertSvgImage(L, svg, widthPts, heightPts);
+        QByteArray svgContents = svgFile.readAll();
+        insertSvgImage(L, svgContents, widthPts, heightPts);
     } else {
         insertBitmapImage(L, name, widthPts, heightPts);
     }
@@ -486,7 +486,7 @@ int PalayDocument::image(lua_State *L)
 
 int PalayDocument::svg(lua_State *L)
 {
-    QString contents = QString::fromUtf8(luaL_checkstring(L, 2));
+    QByteArray svgContents = luaL_checkstring(L, 2);
     float widthPts = -1;
     float heightPts = -1;
 
@@ -495,7 +495,7 @@ int PalayDocument::svg(lua_State *L)
     if (lua_gettop(L) >= 4)
         heightPts = luaL_checkinteger(L, 4);
 
-    insertSvgImage(L, contents, widthPts, heightPts);
+    insertSvgImage(L, svgContents, widthPts, heightPts);
 
     return 0;
 }
@@ -912,9 +912,9 @@ void PalayDocument::insertBitmapImage(lua_State *L, const QString &filename, flo
     cursorStack_.top().insertText(QString(QChar::ObjectReplacementCharacter), format);
 }
 
-void PalayDocument::insertSvgImage(lua_State *L, const QString &svg, float widthPts, float heightPts)
+void PalayDocument::insertSvgImage(lua_State *L, const QByteArray &svgContents, float widthPts, float heightPts)
 {
-    SvgVectorTextObject *svgTextFormatInterface = new SvgVectorTextObject(svg, widthPts, heightPts, this);
+    SvgVectorTextObject *svgTextFormatInterface = new SvgVectorTextObject(svgContents, widthPts, heightPts, this);
     if (!svgTextFormatInterface->isValid())
         luaL_error(L, "Error parsing SVG");
 
