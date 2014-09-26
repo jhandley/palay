@@ -58,10 +58,10 @@ Q_GUI_EXPORT extern int qt_defaultDpiY();
         http://qt-project.org/doc/qt-4.8/richtext-textobject.html
  */
 
-SvgVectorTextObject::SvgVectorTextObject(const QString &svg, float width, float height, QObject *parent) :
+SvgVectorTextObject::SvgVectorTextObject(const QByteArray &svgContents, float width, float height, QObject *parent) :
     QObject(parent),
     size_(width, height),
-    renderer_(new QSvgRenderer(svg.toUtf8(), this))
+    renderer_(new QSvgRenderer(svgContents, this))
 {
     if (renderer_->isValid()) {
         if (width < 0 && height < 0) {

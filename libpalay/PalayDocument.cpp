@@ -72,14 +72,12 @@ namespace {
 PalayDocument::PalayDocument(QObject *parent) :
     QObject(parent),
     doc_(new QTextDocument(this)),
-    printer_(QPrinter::HighResolution),
-    nextCustomObjectType_(QTextFormat::UserObject + 1)
+    printer_(QPrinter::HighResolution)
 {
     Formats defaultFormat;
 
     QFont defaultFont("DejaVuSans", 12);
     doc_->setDefaultFont(defaultFont);
-
     defaultFormat.char_.setFont(defaultFont);
     defaultFormat.char_.setForeground(QBrush(Qt::black));
 
@@ -475,8 +473,8 @@ int PalayDocument::image(lua_State *L)
         QFile svgFile(name);
         if (!svgFile.open(QFile::ReadOnly))
             luaL_error(L, "Failed to open SVG file %s", qPrintable(name));
-        QString svg = QString::fromUtf8(svgFile.readAll());
-        insertSvgImage(L, svg, widthPts, heightPts);
+        QByteArray svgContents = svgFile.readAll();
+        insertSvgImage(L, svgContents, widthPts, heightPts);
     } else {
         insertBitmapImage(L, name, widthPts, heightPts);
     }
@@ -486,7 +484,7 @@ int PalayDocument::image(lua_State *L)
 
 int PalayDocument::svg(lua_State *L)
 {
-    QString contents = QString::fromUtf8(luaL_checkstring(L, 2));
+    QByteArray svgContents = luaL_checkstring(L, 2);
     float widthPts = -1;
     float heightPts = -1;
 
@@ -495,7 +493,7 @@ int PalayDocument::svg(lua_State *L)
     if (lua_gettop(L) >= 4)
         heightPts = luaL_checkinteger(L, 4);
 
-    insertSvgImage(L, contents, widthPts, heightPts);
+    insertSvgImage(L, svgContents, widthPts, heightPts);
 
     return 0;
 }
@@ -905,24 +903,30 @@ void PalayDocument::insertBitmapImage(lua_State *L, const QString &filename, flo
         luaL_error(L, "Failed to load image from file %s", qPrintable(filename));
 
     BitmapTextObject *bitmapTextFormatInterface = new BitmapTextObject(im, pointsToDotsX(widthPts), pointsToDotsX(heightPts));
-    int objectType = nextCustomObjectType_++;
-    cursorStack_.top().document()->documentLayout()->registerHandler(objectType, bitmapTextFormatInterface);
-    QTextCharFormat format;
-    format.setObjectType(objectType);
-    cursorStack_.top().insertText(QString(QChar::ObjectReplacementCharacter), format);
+
+    LayoutHandler lh;
+    lh.component = bitmapTextFormatInterface;
+    lh.cursor = cursorStack_.top();
+    lh.position = lh.cursor.position();
+    layoutHandlers_.append(lh);
 }
 
-void PalayDocument::insertSvgImage(lua_State *L, const QString &svg, float widthPts, float heightPts)
+void PalayDocument::insertSvgImage(lua_State *L, const QByteArray &svgContents, float widthPts, float heightPts)
 {
-    SvgVectorTextObject *svgTextFormatInterface = new SvgVectorTextObject(svg, widthPts, heightPts, this);
+    SvgVectorTextObject *svgTextFormatInterface = new SvgVectorTextObject(svgContents, widthPts, heightPts, this);
     if (!svgTextFormatInterface->isValid())
         luaL_error(L, "Error parsing SVG");
 
-    int objectType = nextCustomObjectType_++;
-    cursorStack_.top().document()->documentLayout()->registerHandler(objectType, svgTextFormatInterface);
-    QTextCharFormat format;
-    format.setObjectType(objectType);
-    cursorStack_.top().insertText(QString(QChar::ObjectReplacementCharacter), format);
+    // Inserting the images inline here is amazingly slow, so defer the insertion
+    // to just before printing. This cuts pdf generation time by 50% or more. The
+    // issue appears to be that the call to get the documentLayout() causes the
+    // documentLayout to be created if there isn't one and that results in additional
+    // computations everywhere.
+    LayoutHandler lh;
+    lh.component = svgTextFormatInterface;
+    lh.cursor = cursorStack_.top();
+    lh.position = lh.cursor.position();
+    layoutHandlers_.append(lh);
 }
 
 void PalayDocument::print()
@@ -936,8 +940,20 @@ void PalayDocument::print()
     qreal pageWidth = doc_->pageSize().width();
     qreal pageHeight = doc_->pageSize().height();
 
-    QAbstractTextDocumentLayout *layout = doc_->documentLayout();
+    // Deferred registration of layout handlers
+    int objectType = QTextFormat::UserObject + 1;
+    for (QList<LayoutHandler>::iterator i = layoutHandlers_.begin();
+         i != layoutHandlers_.end();
+         ++i, ++objectType) {
+        i->cursor.setPosition(i->position);
+        i->cursor.document()->documentLayout()->registerHandler(objectType, i->component);
 
+        QTextCharFormat format;
+        format.setObjectType(objectType);
+        i->cursor.insertText(QString(QChar::ObjectReplacementCharacter), format);
+    }
+
+    QAbstractTextDocumentLayout *layout = doc_->documentLayout();
     for (int pageNumber = 1; pageNumber <= doc_->pageCount(); ++pageNumber) {
 
         painter.save();
