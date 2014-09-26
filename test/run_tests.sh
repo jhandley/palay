@@ -2,6 +2,7 @@
 
 SCRIPT_NAME=$0
 TEST_DIR=$(dirname $(readlink -f $0))
+TESTS=$*
 
 red='\E[31m'
 green='\E[32m'
@@ -37,7 +38,7 @@ run() {
 }
 
 cd $TEST_DIR
-TESTS=$(find . ! -path . -type d | sort)
+[ "$TESTS" == "" ] && TESTS=$(find . ! -path . -type d | sort)
 for TEST in $TESTS; do
     run $TEST
 done
