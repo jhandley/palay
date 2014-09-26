@@ -23,6 +23,7 @@
 #include <QTextCharFormat>
 #include <QTextTableFormat>
 #include <QTextTableCellFormat>
+#include <QTextCursor>
 #include <QStack>
 #include <QPrinter>
 
@@ -90,7 +91,13 @@ private:
     QPrinter printer_;
     QList<AbsoluteBlock*> absoluteBlocks_;
     QStack<Formats> formatStack_;
-    int nextCustomObjectType_;
+
+    struct LayoutHandler {
+        QObject *component;
+        QTextCursor cursor;
+        int position;
+    };
+    QList<LayoutHandler> layoutHandlers_;
 };
 
 #endif // PALAYDOCUMENT_H
